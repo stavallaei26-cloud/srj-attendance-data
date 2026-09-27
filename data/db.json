@@ -4,7 +4,7 @@
   ],
   "users": [
     { "id": 1, "username": "sina", "password": "1234", "name": "سینا تولائی", "role": "staff", "roleTitle": "کارشناس ارشد زمین‌شناسی و مدلسازی", "project": "afg-camp", "department": "اکتشاف", "personnelNo": "SRJ-1001", "photo": "", "cycleStart": "" },
-    { "id": 2, "username": "reza", "password": "1234", name: "رضا احمدی", "role": "staff", "roleTitle": "سرپرست استخراج", "project": "sarcheshmeh", "department": "استخراج", "personnelNo": "SRJ-1004", "photo": "", "cycleStart": "" }
+    { "id": 2, "username": "reza", "password": "1234", "name": "رضا احمدی", "role": "staff", "roleTitle": "سرپرست استخراج", "project": "sarcheshmeh", "department": "استخراج", "personnelNo": "SRJ-1004", "photo": "", "cycleStart": "" }
   ],
   "projects": [
     { "code": "afg-camp", "name": "کمپ معدنی افغانستان", "radius": 250, "workDays": 30, "restDays": 10 },
