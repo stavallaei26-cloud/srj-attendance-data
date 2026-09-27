@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد جامع مدیریت و کنترل عملیات - SRJ Group</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230097cc'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0f172a; --primary-light: #1e293b; --sidebar-bg: #0b1120;
+            --accent: #0097cc; --accent-hover: #007299; --accent-bg: #e0f4fb;
+            --gold: #d97706; --gold-light: #fef3c7; --success: #16a34a; --success-light: #dcfce7;
+            --danger: #dc2626; --danger-light: #fee2e2; --purple: #7c3aed; --purple-light: #ede9fe;
+            --bg: #f8fafc; --card: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --border: #e2e8f0;
+            --radius-md: 14px; --radius-lg: 20px; --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        * { box-sizing: border-box; font-family: 'Vazirmatn', sans-serif !important; margin: 0; padding: 0; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
+
+        /* ---------- صفحات تنظیمات اولیه و ورود ---------- */
+        .center-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; width: 100%; max-width: 440px; border-radius: var(--radius-lg); padding: 30px; box-shadow: 0 20px 45px rgba(0,0,0,0.12); border: 1px solid var(--border); }
+        .auth-card h2 { font-size: 1.15rem; font-weight: 900; color: var(--primary); margin-bottom: 6px; text-align: center; }
+        .auth-card p.sub { font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+        .auth-note { background: #f1f5f9; border-radius: 10px; padding: 10px 12px; font-size: 0.72rem; color: #475569; margin-top: 14px; line-height: 1.8; }
+        .auth-error { background: var(--danger-light); color: var(--danger); border-radius: 10px; padding: 8px 12px; font-size: 0.78rem; margin-bottom: 12px; display: none; }
+
+        /* ---------- عمومی ---------- */
+        .admin-sidebar {
+            width: 270px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column;
+            position: fixed; top: 0; right: 0; bottom: 0; z-index: 1000; box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+        }
+        .sidebar-brand {
+            padding: 22px 20px; display: flex; flex-direction: column; align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.08); background: linear-gradient(180deg, rgba(0,151,204,0.15) 0%, transparent 100%);
+        }
+        .brand-logo-img { height: 44px; width: auto; background: white; padding: 4px 10px; border-radius: 10px; margin-bottom: 10px; }
+        .sidebar-menu { padding: 14px 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .menu-category { font-size: 0.68rem; color: #64748b; font-weight: 800; padding: 10px 12px 4px; text-transform: uppercase; }
+        .sidebar-link {
+            display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; color: #94a3b8;
+            text-decoration: none; border-radius: 12px; font-size: 0.86rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .sidebar-link:hover { background: rgba(255,255,255,0.06); color: white; }
+        .sidebar-link.active { background: linear-gradient(90deg, #0097cc, #007299); color: white; box-shadow: 0 4px 14px rgba(0,151,204,0.4); }
+        .sidebar-link .link-inner { display: flex; align-items: center; gap: 10px; }
+        .badge-count { background: var(--danger); color: white; font-size: 0.68rem; font-weight: 900; padding: 2px 7px; border-radius: 12px; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); }
+
+        .admin-main { flex: 1; margin-right: 270px; padding: 20px 24px; min-width: 0; }
+        .admin-topbar {
+            background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 20px;
+            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm); flex-wrap: wrap; gap: 12px;
+        }
+        .topbar-title h1 { font-size: 1.2rem; font-weight: 900; color: var(--primary); }
+        .topbar-title p { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .live-badge { display: inline-flex; align-items: center; gap: 6px; background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; }
+        .live-dot { width: 8px; height: 8px; background: #16a34a; border-radius: 50%; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .conn-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:0.72rem; font-weight:800; }
+        .conn-ok { background:#dcfce7; color:#166534; }
+        .conn-syncing { background:#fef3c7; color:#92400e; }
+        .conn-error { background:#fee2e2; color:#991b1b; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-card { background: white; border: 1px solid var(--border); padding: 18px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between; }
+        .stat-icon-wrap { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+        .stat-info .lbl { font-size: 0.78rem; color: var(--text-muted); font-weight: 700; }
+        .stat-info .val { font-size: 1.6rem; font-weight: 900; color: var(--primary); margin-top: 3px; }
+
+        .card { background: var(--card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+        .card-title { font-size: 1.05rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+
+        .table-responsive { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 950px; text-align: center; }
+        th, td { border: 1px solid var(--border); padding: 10px; }
+        th { background: #f8fafc; font-weight: 800; color: #1e293b; }
+        tr:hover { background-color: #f8fafc; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+
+        .form-group { margin-bottom: 14px; text-align: right; }
+        label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: #334155; }
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], select, textarea {
+            width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.88rem; background: #fff;
+        }
+
+        .btn { background: var(--accent); color: white; border: none; padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+        .btn:hover { opacity: 0.93; }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-success { background: var(--success); }
+        .btn-gold { background: var(--gold); }
+        .btn-danger { background: var(--danger); }
+        .btn-purple { background: var(--purple); }
+        .btn-outline { background: transparent; border: 1.5px solid var(--border); color: #334155; }
+        .btn-sm { padding: 5px 10px; font-size: 0.75rem; border-radius: 8px; }
+        .btn-block { width: 100%; padding: 11px; }
+
+        .badge { padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; display: inline-block; }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: var(--gold-light); color: var(--gold); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-info { background: var(--accent-bg); color: var(--accent-hover); }
+        .badge-purple { background: var(--purple-light); color: var(--purple); }
+
+        .search-box { margin-bottom: 12px; }
+        .search-box input { max-width: 280px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            z-index: 10000; display: none; justify-content: center; align-items: center; padding: 16px;
+        }
+        .modal-content { background: white; width: 100%; max-width: 550px; border-radius: 18px; padding: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .close-modal-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-muted); }
+
+        @media (max-width: 992px) {
+            .admin-sidebar { transform: translateX(100%); }
+            .admin-main { margin-right: 0; padding: 14px; }
+            .grid-3, .grid-4, .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ====================== صفحه تنظیمات اولیه اتصال به گیت‌هاب ====================== -->
+    <div id="screen-setup" class="center-screen">
+        <div class="auth-card">
+            <h2>⚙️ اتصال به فضای ذخیره‌سازی</h2>
+            <p class="sub">اطلاعات مخزن گیت‌هابی که به‌عنوان دیتابیس مشترک استفاده می‌شود</p>
+            <div class="auth-error" id="setup-error"></div>
+            <form onsubmit="handleSetupSubmit(event)">
+                <div class="form-group">
+                    <label>نام کاربری / سازمان گیت‌هاب (owner):</label>
+                    <input type="text" id="cfg-owner" placeholder="مثلاً srj-group" required>
+                </div>
+                <div class="form-group">
+                    <label>نام مخزن (repository):</label>
+                    <input type="text" id="cfg-repo" placeholder="مثلاً srj-attendance-data" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label>شاخه (branch):</label><input type="text" id="cfg-branch" value="main" required></div>
+                    <div class="form-group"><label>مسیر فایل داده:</label><input type="text" id="cfg-path" value="data/db.json" required></div>
+                </div>
+                <div class="form-group">
+                    <label>Personal Access Token (با دسترسی repo):</label>
+                    <input type="password" id="cfg-token" placeholder="ghp_..." required>
+                </div>
+                <button type="submit" class="btn btn-success btn-block" id="setup-submit-btn">🔗 اتصال و شروع</button>
+            </form>
+            <div class="auth-note">
+                ⚠️ این توکن روی همین دستگاه و در حافظه مرورگر ذخیره می‌شود و هرگز به گیت‌هاب ارسال نمی‌شود جز برای فراخوانی API. توصیه می‌شود یک <b>مخزن خصوصی (Private)</b> جدا فقط برای این داده بسازید و یک Fine-grained Token با دسترسی محدود به همان مخزن (Contents: Read/Write) بسازید، نه یک توکن با دسترسی کامل به همه مخازن.
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== صفحه ورود مدیران ====================== -->
+    <div id="screen-login" class="center-screen" style="display:none;">
+        <div class="auth-card">
+            <h2>🔐 ورود به پنل مدیریت SRJ</h2>
+            <p class="sub">لطفاً با نام کاربری و رمز عبور خود وارد شوید</p>
+            <div class="auth-error" id="login-error"></div>
+            <form onsubmit="handleLoginSubmit(event)">
+                <div class="form-group"><label>نام کاربری:</label><input type="text" id="lg-username" required></div>
+                <div class="form-group"><label>رمز عبور:</label><input type="password" id="lg-password" required></div>
+                <button type="submit" class="btn btn-success btn-block">ورود</button>
+            </form>
+            <div class="auth-note">
+                در صورت راه‌اندازی اولیه، کاربر پیش‌فرض: <code>admin</code> / رمز: <code>admin123</code> — پس از ورود حتماً رمز را از تب «تنظیمات سیستم» تغییر دهید و مدیران دیگر را اضافه کنید.
+                <br>برای اتصال به مخزن دیگر: <a href="#" onclick="resetGithubConfig();return false;">تغییر تنظیمات اتصال</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== پنل اصلی مدیریت ====================== -->
+    <div id="admin-app" style="display:none;">
+    <aside class="admin-sidebar">
+        <div class="sidebar-brand">
+            <img src="data:image/png;base64,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" alt="SRJ" class="brand-logo-img">
+            <h2>پنل جامع مدیریت SRJ</h2>
+            <p>کنترل تردد و کارکرد مهندسی معدن</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <div class="menu-category">نظارت و عملیات</div>
+            <a class="sidebar-link active" onclick="switchAdminTab('live', event)">
+                <div class="link-inner"><span class="icon">📡</span><span>مانیتورینگ زنده تردد</span></div>
+                <span class="live-dot"></span>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('approvals', event)">
+                <div class="link-inner"><span class="icon">✅</span><span>کارتابل تاییدات تردد</span></div>
+                <span class="badge-count" id="sb-pending-count">0</span>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('home-ot', event)">
+                <div class="link-inner"><span class="icon">🌙</span><span>تایید اضافه‌کار منزل/کمپ</span></div>
+                <span class="badge-count" id="sb-ot-count" style="background:var(--purple);">0</span>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('leaves', event)">
+                <div class="link-inner"><span class="icon">🏖️</span><span>مرخصی و مأموریت‌ها</span></div>
+                <span class="badge-count" id="sb-leaves-count" style="background:var(--gold);">0</span>
+            </a>
+
+            <div class="menu-category">مالی و گزارش‌گیری</div>
+            <a class="sidebar-link" onclick="switchAdminTab('payroll', event)">
+                <div class="link-inner"><span class="icon">💰</span><span>حقوق و صدور فیش‌ها</span></div>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('reports', event)">
+                <div class="link-inner"><span class="icon">📥</span><span>شیت اکسل و کارکرد شرکت</span></div>
+            </a>
+
+            <div class="menu-category">پیکربندی سازمان</div>
+            <a class="sidebar-link" onclick="switchAdminTab('users', event)">
+                <div class="link-inner"><span class="icon">👥</span><span>مدیریت پرسنل و اکانت‌ها</span></div>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('projects', event)">
+                <div class="link-inner"><span class="icon">📍</span><span>پروژه‌ها و چرخه کاری</span></div>
+            </a>
+            <a class="sidebar-link" onclick="switchAdminTab('settings', event)">
+                <div class="link-inner"><span class="icon">⚙️</span><span>تنظیمات سیستم</span></div>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div style="font-size:0.75rem;">
+                <b id="sf-admin-name">مدیریت کل SRJ</b>
+                <p style="color:#64748b; font-size:0.68rem;">متصل به مخزن مشترک گیت‌هاب</p>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="logoutAdmin()">خروج</button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div class="topbar-title">
+                <h1 id="tab-headline">📡 مانیتورینگ زنده پرسنل در پروژه‌ها</h1>
+                <p id="tab-subheadline">نمایش لحظه‌ای وضعیت حضور، موقعیت مکانی و ورود و خروج‌های امروز</p>
+            </div>
+            <div class="topbar-tools" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span class="conn-badge conn-ok" id="conn-status">🟢 متصل | آخرین بروزرسانی: <span id="conn-time">--:--:--</span></span>
+                <button class="btn btn-sm btn-outline" onclick="manualSync()">🔄 همگام‌سازی</button>
+                <button class="btn btn-sm btn-success" onclick="exportExactCompanyExcel()">📥 دانلود اکسل ماهانه</button>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info"><div class="lbl">حاضرین سر شیفت امروز</div><div class="val" id="kpi-present-count" style="color:var(--success);">۰</div></div>
+                <div class="stat-icon-wrap" style="background:#dcfce7; color:#16a34a;">👷‍♂️</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><div class="lbl">ترددهای نیازمند تایید</div><div class="val" id="kpi-pending-punches" style="color:var(--danger);">۰</div></div>
+                <div class="stat-icon-wrap" style="background:#fee2e2; color:#dc2626;">⏳</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><div class="lbl">اضافه‌کار منزل (تایید نشده)</div><div class="val" id="kpi-pending-ot" style="color:var(--purple);">۰</div></div>
+                <div class="stat-icon-wrap" style="background:#ede9fe; color:#7c3aed;">🌙</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><div class="lbl">مرخصی‌های در انتظار</div><div class="val" id="kpi-leave-count" style="color:var(--gold);">۰</div></div>
+                <div class="stat-icon-wrap" style="background:#fef3c7; color:#d97706;">🏖️</div>
+            </div>
+        </section>
+
+        <!-- تب ۱: مانیتورینگ زنده -->
+        <section id="tab-live" class="admin-section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📡 وضعیت زنده نیروها در سایت‌ها و معادن</span>
+                    <button class="btn btn-sm btn-outline" onclick="renderLiveMonitor()">🔄 بروزرسانی نمایش</button>
+                </div>
+                <div class="search-box"><input type="text" id="live-search" placeholder="جست‌وجوی نام پرسنل..." oninput="renderLiveMonitor()"></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>تصویر</th>
+                                <th>پرسنل</th>
+                                <th>سمت</th>
+                                <th>پروژه</th>
+                                <th>ورود</th>
+                                <th>خروج</th>
+                                <th>چرخه کاری</th>
+                                <th>گزارش روزانه</th>
+                                <th>وضعیت</th>
+                            </tr>
+                        </thead>
+                        <tbody id="live-monitor-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۲: کارتابل تاییدات -->
+        <section id="tab-approvals" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">✅ کارتابل بررسی و تایید شیفت‌ها و گزارش‌های عملکرد</span>
+                    <button class="btn btn-sm btn-success" onclick="approveAllPendingLogs()">✓ تایید گروهی همه</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرسنل</th>
+                                <th>تاریخ</th>
+                                <th>ساعت کار</th>
+                                <th>پروژه</th>
+                                <th>گزارش کارهای انجام‌شده</th>
+                                <th>وضعیت</th>
+                                <th>تصمیم‌گیری</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvals-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۳: تایید اضافه‌کار منزل -->
+        <section id="tab-home-ot" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title" style="color:var(--purple);">🌙 تایید اضافه‌کاری‌های دورکاری (منزل / کمپ)</span>
+                    <button class="btn btn-sm btn-purple" onclick="approveAllPendingOT()">✓ تایید همه</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرسنل</th>
+                                <th>تاریخ</th>
+                                <th>ساعت</th>
+                                <th>محل</th>
+                                <th>نوع کار</th>
+                                <th>شرح اقدامات</th>
+                                <th>وضعیت</th>
+                                <th>تصمیم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="home-ot-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۴: مرخصی‌ها -->
+        <section id="tab-leaves" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><span class="card-title">🏖️ کارتابل درخواست‌های مرخصی و مأموریت</span></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرسنل</th>
+                                <th>نوع</th>
+                                <th>بازه زمانی</th>
+                                <th>علت</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaves-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۵: حقوق و دستمزد -->
+        <section id="tab-payroll" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><span class="card-title">💰 مرکز محاسبه حقوق و صدور فیش‌های پرسنل</span></div>
+                <div class="grid-3" style="margin-bottom:14px;">
+                    <div class="form-group"><label>پرسنل:</label><select id="pr-admin-employee" onchange="pullAdminAttendanceForPayroll()"></select></div>
+                    <div class="form-group"><label>ماه (1405/06):</label><input type="text" id="pr-admin-month" value="1405/06"></div>
+                    <div class="form-group" style="display:flex; align-items:flex-end;"><button class="btn btn-outline" style="width:100%;" onclick="pullAdminAttendanceForPayroll()">🔄 استخراج کارکرد و اضافه‌کار</button></div>
+                </div>
+                <div style="background:#f8fafc; border:1px solid var(--border); padding:10px; border-radius:10px; margin-bottom:12px; font-size:0.8rem;" id="pr-admin-summary">انتخاب پرسنل جهت استخراج ساعات کارکرد...</div>
+                <div class="grid-4">
+                    <div class="form-group"><label>حقوق پایه:</label><input type="number" min="0" id="pr-adm-base" value="28500000" oninput="calcAdminPayroll()"></div>
+                    <div class="form-group"><label>حق مسکن:</label><input type="number" min="0" id="pr-adm-housing" value="4500000" oninput="calcAdminPayroll()"></div>
+                    <div class="form-group"><label>پاداش فیلد:</label><input type="number" min="0" id="pr-adm-bonus" value="5000000" oninput="calcAdminPayroll()"></div>
+                    <div class="form-group"><label>ساعت اضافه‌کار کل:</label><input type="number" min="0" step="0.5" id="pr-adm-ot-hours" value="0" oninput="calcAdminPayroll()"></div>
+                </div>
+                <div class="grid-3" style="background:#f1f5f9; padding:12px; border-radius:10px; margin-bottom:12px;">
+                    <div style="text-align:center;"><span>ناخالص:</span><div style="font-weight:900; color:var(--success);" id="pr-adm-gross">۰</div></div>
+                    <div style="text-align:center;"><span>کسورات:</span><div style="font-weight:900; color:var(--danger);" id="pr-adm-ded">۰</div></div>
+                    <div style="text-align:center;"><span>خالص پرداختی:</span><div style="font-weight:900; color:var(--accent); font-size:1.2rem;" id="pr-adm-net">۰</div></div>
+                </div>
+                <button class="btn btn-success btn-block" onclick="issueAdminPayslip()">🧾 صدور رسمی فیش و ارسال به پرسنل</button>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">📚 آرشیو فیش‌های صادرشده</span></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>پرسنل</th><th>شماره</th><th>ماه</th><th>ناخالص</th><th>کسورات</th><th>خالص</th><th>تاریخ</th><th>عملیات</th></tr></thead>
+                        <tbody id="admin-payslips-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۶: اکسل -->
+        <section id="tab-reports" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📥 خروجی رسمی کارکرد ماهانه پرسنل (مطابق اکسل شرکت)</span>
+                    <button class="btn btn-success" onclick="exportExactCompanyExcel()">📥 دانلود فایل اکسل (.xlsx)</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>ردیف</th><th>پرسنل</th><th>تاریخ</th><th>وضعیت</th><th>پروژه</th><th>ساعت کار</th><th>شرح</th><th>محل</th><th>اضافه‌کار</th><th>تایید</th></tr></thead>
+                        <tbody id="company-sheet-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۷: مدیریت پرسنل -->
+        <section id="tab-users" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">👥 مدیریت پرسنل و اکانت‌ها (همراه با تصویر پروفایل)</span>
+                    <button class="btn btn-gold" onclick="openNewStaffModal()">+ افزودن پرسنل جدید</button>
+                </div>
+                <div class="search-box"><input type="text" id="users-search" placeholder="جست‌وجوی نام، یوزرنیم یا شماره پرسنلی..." oninput="renderAdminUsers()"></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>تصویر</th><th>نام</th><th>پرسنلی</th><th>یوزر</th><th>واحد</th><th>سمت</th><th>پروژه</th><th>شروع چرخه</th><th>عملیات</th></tr></thead>
+                        <tbody id="admin-users-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۸: پروژه‌ها و چرخه کاری -->
+        <section id="tab-projects" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📍 پروژه‌ها، محدوده ژئوفنس و چرخه کاری هرکدام</span>
+                    <button class="btn btn-gold" onclick="openNewProjectModal()">+ افزودن پروژه</button>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px;">چرخه کاری یعنی الگوی روزهای کاری/استراحت هر پروژه (مثلاً افغانستان ۳۰ روز کار / ۱۰ روز استراحت، ایران ۲۲/۸). این الگو برای محاسبه وضعیت چرخه هر پرسنل در جدول مانیتورینگ زنده استفاده می‌شود.</p>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>کد</th><th>نام کارگاه/پروژه</th><th>شعاع مجاز (متر)</th><th>روزهای کاری</th><th>روزهای استراحت</th><th>عملیات</th></tr></thead>
+                        <tbody id="admin-projects-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- تب ۹: تنظیمات سیستم -->
+        <section id="tab-settings" class="admin-section" style="display:none;">
+            <div class="card">
+                <div class="card-header"><span class="card-title">⚙️ اتصال به فضای ذخیره‌سازی مشترک (گیت‌هاب)</span></div>
+                <div id="gh-conn-info" style="font-size:0.85rem; line-height:2;"></div>
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="resetGithubConfig()">🔗 تغییر تنظیمات اتصال</button>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">👤 مدیران دارای دسترسی به این پنل</span>
+                    <button class="btn btn-gold" onclick="openNewAdminModal()">+ افزودن مدیر</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>نام</th><th>یوزرنیم</th><th>عملیات</th></tr></thead>
+                        <tbody id="admin-admins-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    </div>
+
+    <!-- مودال پرسنل -->
+    <div id="modal-staff" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="font-weight:800; font-size:1rem;" id="staff-modal-title">تعریف پرسنل</h3><button class="close-modal-btn" onclick="closeModal('modal-staff')">×</button></div>
+            <form onsubmit="handleSaveStaff(event)">
+                <input type="hidden" id="stf-edit-id">
+                <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="stf-name" required></div>
+                <div class="grid-2">
+                    <div class="form-group"><label>یوزر:</label><input type="text" id="stf-username" required></div>
+                    <div class="form-group"><label>رمز:</label><input type="text" id="stf-password" value="1234" required></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label>سمت:</label><input type="text" id="stf-role-title" required></div>
+                    <div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="stf-personnel-no" placeholder="SRJ-1005"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group"><label>پروژه:</label><select id="stf-project"></select></div>
+                    <div class="form-group"><label>تاریخ شروع چرخه کاری:</label><input type="date" id="stf-cycle-start"></div>
+                </div>
+                <div class="form-group">
+                    <label>تصویر پروفایل (آپلود عکس یا URL):</label>
+                    <input type="file" id="stf-photo-file" accept="image/*" onchange="previewStaffPhoto(event)" style="margin-bottom:6px;">
+                    <input type="text" id="stf-photo-url" placeholder="یا لینک تصویر را وارد کنید...">
+                    <div style="margin-top:6px; text-align:center;">
+                        <img id="stf-photo-preview" src="" alt="پیش‌نمایش" style="width:50px; height:50px; border-radius:50%; object-fit:cover; display:none; border:2px solid var(--accent); margin:0 auto;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-gold btn-block">💾 ذخیره اطلاعات پرسنل</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال پروژه -->
+    <div id="modal-project" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="font-weight:800; font-size:1rem;" id="project-modal-title">تعریف پروژه</h3><button class="close-modal-btn" onclick="closeModal('modal-project')">×</button></div>
+            <form onsubmit="handleSaveProject(event)">
+                <input type="hidden" id="prj-edit-code">
+                <div class="form-group"><label>کد یکتای پروژه (انگلیسی، بدون فاصله):</label><input type="text" id="prj-code" required></div>
+                <div class="form-group"><label>نام پروژه/کارگاه:</label><input type="text" id="prj-name" required></div>
+                <div class="form-group"><label>شعاع مجاز ژئوفنس (متر):</label><input type="number" min="0" id="prj-radius" value="250" required></div>
+                <div class="grid-2">
+                    <div class="form-group"><label>روزهای کاری:</label><input type="number" min="1" id="prj-work-days" value="30" required></div>
+                    <div class="form-group"><label>روزهای استراحت:</label><input type="number" min="1" id="prj-rest-days" value="10" required></div>
+                </div>
+                <button type="submit" class="btn btn-gold btn-block">💾 ذخیره پروژه</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مودال مدیر -->
+    <div id="modal-admin" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="font-weight:800; font-size:1rem;" id="admin-modal-title">افزودن مدیر</h3><button class="close-modal-btn" onclick="closeModal('modal-admin')">×</button></div>
+            <form onsubmit="handleSaveAdmin(event)">
+                <input type="hidden" id="adm-edit-username">
+                <div class="form-group"><label>نام کامل:</label><input type="text" id="adm-name" required></div>
+                <div class="form-group"><label>یوزرنیم:</label><input type="text" id="adm-username" required></div>
+                <div class="form-group"><label>رمز عبور:</label><input type="text" id="adm-password" required></div>
+                <button type="submit" class="btn btn-gold btn-block">💾 ذخیره مدیر</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================
+           لایه ذخیره‌سازی مشترک روی گیت‌هاب (به‌جای localStorage)
+           همه دستگاه‌ها (وب‌اپ مدیریت و وب‌اپ پرسنل) با خواندن/نوشتن
+           همین فایل JSON در مخزن گیت‌هاب با هم همگام می‌شوند.
+        ========================================================= */
+        const GH_CFG_KEY = 'srj_gh_config_v1';
+        const SESSION_KEY = 'srj_admin_session_v1';
+        const POLL_MS = 25000;
+
+        function esc(v) {
+            if (v === undefined || v === null) return '';
+            return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function ghConfig() { try { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch(e) { return null; } }
+        function saveGhConfig(cfg) { localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg)); }
+        function clearGhConfig() { localStorage.removeItem(GH_CFG_KEY); }
+
+        function b64EncodeUtf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+        function b64DecodeUtf8(str) { return decodeURIComponent(escape(atob(str.replace(/\n/g, '')))); }
+
+        function defaultData() {
+            return {
+                admins: [ { username: 'admin', password: 'admin123', name: 'مدیر سیستم' } ],
+                users: [
+                    { id: 1, username: 'sina', password: '1234', name: 'سینا تولائی', role: 'staff', roleTitle: 'کارشناس ارشد زمین‌شناسی و مدلسازی', project: 'afg-camp', department: 'اکتشاف', personnelNo: 'SRJ-1001', photo: '', cycleStart: '' },
+                    { id: 2, username: 'reza', password: '1234', name: 'رضا احمدی', role: 'staff', roleTitle: 'سرپرست استخراج', project: 'sarcheshmeh', department: 'استخراج', personnelNo: 'SRJ-1004', photo: '', cycleStart: '' }
+                ],
+                projects: [
+                    { code: 'afg-camp', name: 'کمپ معدنی افغانستان', radius: 250, workDays: 30, restDays: 10 },
+                    { code: 'sarcheshmeh', name: 'معدن سرچشمه', radius: 350, workDays: 22, restDays: 8 }
+                ],
+                worklogs: [],
+                ot: [],
+                leaves: [],
+                payslips: []
+            };
+        }
+
+        let DB = null;
+        let DB_SHA = null;
+        let currentAdmin = null;
+        let pollTimer = null;
+
+        async function ghFetchFile() {
+            const cfg = ghConfig();
+            const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURI(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&t=${Date.now()}`;
+            const res = await fetch(url, { headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github+json' } });
+            if (res.status === 404) return { data: defaultData(), sha: null };
+            if (res.status === 401 || res.status === 403) throw new Error('توکن نامعتبر است یا دسترسی کافی ندارد.');
+            if (!res.ok) throw new Error('خطای اتصال به گیت‌هاب (کد ' + res.status + ')');
+            const json = await res.json();
+            const content = b64DecodeUtf8(json.content);
+            let data;
+            try { data = JSON.parse(content); } catch(e) { throw new Error('فایل داده روی گیت‌هاب خراب یا نامعتبر است.'); }
+            return { data, sha: json.sha };
+        }
+
+        async function ghSaveFile(data, sha, message) {
+            const cfg = ghConfig();
+            const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURI(cfg.path)}`;
+            const body = { message: message || 'update SRJ data', content: b64EncodeUtf8(JSON.stringify(data, null, 2)), branch: cfg.branch };
+            if (sha) body.sha = sha;
+            const res = await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github+json' }, body: JSON.stringify(body) });
+            if (res.status === 409 || res.status === 422) { const err = new Error('conflict'); err.conflict = true; throw err; }
+            if (!res.ok) throw new Error('خطا در ذخیره روی گیت‌هاب (کد ' + res.status + ')');
+            const json = await res.json();
+            return json.content.sha;
+        }
+
+        function setConnStatus(state, msg) {
+            const el = document.getElementById('conn-status');
+            if (!el) return;
+            el.classList.remove('conn-ok', 'conn-syncing', 'conn-error');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            if (state === 'ok') { el.classList.add('conn-ok'); el.innerHTML = `🟢 متصل | آخرین بروزرسانی: <span id="conn-time">${time}</span>`; }
+            else if (state === 'syncing') { el.classList.add('conn-syncing'); el.innerHTML = `🟡 در حال همگام‌سازی...`; }
+            else { el.classList.add('conn-error'); el.innerHTML = `🔴 خطا در اتصال (${esc(msg||'')})`; }
+        }
+
+        async function loadDbFromGithub() {
+            setConnStatus('syncing');
+            const { data, sha } = await ghFetchFile();
+            DB = data;
+            DB_SHA = sha;
+            setConnStatus('ok');
+        }
+
+        // ذخیره DB فعلی روی گیت‌هاب با تلاش مجدد در صورت تداخل هم‌زمانی
+        async function commitDb(message) {
+            setConnStatus('syncing');
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    DB_SHA = await ghSaveFile(DB, DB_SHA, message);
+                    setConnStatus('ok');
+                    return true;
+                } catch (e) {
+                    if (e && e.conflict) {
+                        try {
+                            const fresh = await ghFetchFile();
+                            DB_SHA = fresh.sha; // نسخه ما را نگه می‌داریم، فقط sha را به‌روز می‌کنیم
+                            continue;
+                        } catch (e2) { setConnStatus('error', e2.message); alert('خطا در همگام‌سازی: ' + e2.message); return false; }
+                    }
+                    setConnStatus('error', e.message);
+                    alert('خطا در ذخیره‌سازی روی گیت‌هاب: ' + e.message);
+                    return false;
+                }
+            }
+            setConnStatus('error', 'تداخل مکرر');
+            alert('چند بار پشت سر هم تداخل ذخیره‌سازی رخ داد؛ لطفاً دوباره تلاش کنید.');
+            return false;
+        }
+
+        async function manualSync() {
+            try {
+                await loadDbFromGithub();
+                renderAllTabs();
+            } catch (e) { setConnStatus('error', e.message); }
+        }
+
+        function startPolling() {
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(async () => {
+                try { await loadDbFromGithub(); renderAllTabs(); } catch (e) { setConnStatus('error', e.message); }
+            }, POLL_MS);
+        }
+
+        /* ========================= بوت‌استرپ برنامه ========================= */
+        window.onload = boot;
+
+        async function boot() {
+            const cfg = ghConfig();
+            if (!cfg) { showScreen('setup'); return; }
+            try {
+                await loadDbFromGithub();
+            } catch (e) {
+                document.getElementById('setup-error').style.display = 'block';
+                document.getElementById('setup-error').innerText = e.message;
+                showScreen('setup');
+                return;
+            }
+            const sess = sessionStorage.getItem(SESSION_KEY);
+            const found = sess ? DB.admins.find(a => a.username === sess) : null;
+            if (found) { currentAdmin = found; showScreen('app'); initAdminDashboard(); }
+            else { showScreen('login'); }
+        }
+
+        function showScreen(name) {
+            document.getElementById('screen-setup').style.display = name === 'setup' ? 'flex' : 'none';
+            document.getElementById('screen-login').style.display = name === 'login' ? 'flex' : 'none';
+            document.getElementById('admin-app').style.display = name === 'app' ? 'flex' : 'none';
+        }
+
+        async function handleSetupSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('setup-submit-btn');
+            const errBox = document.getElementById('setup-error');
+            errBox.style.display = 'none';
+            const cfg = {
+                owner: document.getElementById('cfg-owner').value.trim(),
+                repo: document.getElementById('cfg-repo').value.trim(),
+                branch: document.getElementById('cfg-branch').value.trim() || 'main',
+                path: document.getElementById('cfg-path').value.trim() || 'data/db.json',
+                token: document.getElementById('cfg-token').value.trim()
+            };
+            btn.disabled = true; btn.innerText = 'در حال بررسی اتصال...';
+            saveGhConfig(cfg);
+            try {
+                await loadDbFromGithub();
+                // اگر فایلی روی گیت‌هاب وجود نداشت، همین حالا نسخه پیش‌فرض را ایجاد می‌کنیم
+                if (DB_SHA === null) await commitDb('راه‌اندازی اولیه پایگاه داده SRJ');
+                showScreen('login');
+            } catch (err) {
+                clearGhConfig();
+                errBox.style.display = 'block';
+                errBox.innerText = err.message;
+            } finally {
+                btn.disabled = false; btn.innerText = '🔗 اتصال و شروع';
+            }
+        }
+
+        function resetGithubConfig() {
+            if (!confirm('تنظیمات اتصال فعلی پاک شود و دوباره وارد شود؟')) return;
+            clearGhConfig();
+            sessionStorage.removeItem(SESSION_KEY);
+            location.reload();
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const u = document.getElementById('lg-username').value.trim();
+            const p = document.getElementById('lg-password').value;
+            const errBox = document.getElementById('login-error');
+            const found = DB.admins.find(a => a.username === u && a.password === p);
+            if (!found) { errBox.style.display = 'block'; errBox.innerText = 'نام کاربری یا رمز عبور اشتباه است.'; return; }
+            errBox.style.display = 'none';
+            currentAdmin = found;
+            sessionStorage.setItem(SESSION_KEY, u);
+            showScreen('app');
+            initAdminDashboard();
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem(SESSION_KEY);
+            currentAdmin = null;
+            if (pollTimer) clearInterval(pollTimer);
+            location.reload();
+        }
+
+        /* ========================= داشبورد اصلی ========================= */
+        function initAdminDashboard() {
+            document.getElementById('sf-admin-name').innerText = currentAdmin ? currentAdmin.name : 'مدیریت کل SRJ';
+            renderAllTabs();
+            startPolling();
+            setInterval(() => {
+                const t = document.getElementById('conn-time');
+                if (t) t.innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+            }, 1000);
+        }
+
+        function renderAllTabs() {
+            renderLiveMonitor();
+            renderApprovals();
+            renderHomeOvertime();
+            renderLeaves();
+            renderAdminUsers();
+            renderProjects();
+            renderAdminAdmins();
+            renderGhConnInfo();
+            renderAdminPayslips();
+            populateAdminDropdowns();
+            updateAdminKPIs();
+        }
+
+        function switchAdminTab(key, ev) {
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            if (ev && ev.currentTarget) ev.currentTarget.classList.add('active');
+
+            const titles = {
+                live: ['📡 مانیتورینگ زنده پرسنل در پروژه‌ها', 'نمایش لحظه‌ای وضعیت حضور، موقعیت مکانی و ورود و خروج‌های امروز'],
+                approvals: ['✅ کارتابل تاییدات تردد', 'بررسی و تایید یا رد گزارش‌های ثبت‌شده توسط پرسنل'],
+                'home-ot': ['🌙 تایید اضافه‌کار منزل/کمپ', 'بررسی درخواست‌های اضافه‌کاری دورکاری'],
+                leaves: ['🏖️ مرخصی و مأموریت‌ها', 'کارتابل درخواست‌های مرخصی و مأموریت پرسنل'],
+                payroll: ['💰 حقوق و صدور فیش‌ها', 'محاسبه و صدور فیش حقوقی بر اساس کارکرد تاییدشده'],
+                reports: ['📥 شیت اکسل و کارکرد شرکت', 'خروجی رسمی کارکرد ماهانه مطابق فرمت شرکت'],
+                users: ['👥 مدیریت پرسنل و اکانت‌ها', 'افزودن، ویرایش و حذف پرسنل'],
+                projects: ['📍 پروژه‌ها و چرخه کاری', 'مدیریت پروژه‌ها، ژئوفنس و الگوی کاری/استراحت هرکدام'],
+                settings: ['⚙️ تنظیمات سیستم', 'اتصال گیت‌هاب و مدیریت دسترسی مدیران']
+            };
+            document.getElementById('tab-headline').innerText = titles[key][0];
+            document.getElementById('tab-subheadline').innerText = titles[key][1];
+
+            ['live', 'approvals', 'home-ot', 'leaves', 'payroll', 'reports', 'users', 'projects', 'settings'].forEach(k => {
+                const el = document.getElementById('tab-' + k);
+                if (el) el.style.display = (k === key) ? 'block' : 'none';
+            });
+
+            if (key === 'reports') renderCompanySheet();
+            if (key === 'payroll') onAdminPayrollChange();
+            if (key === 'users') renderAdminUsers();
+            if (key === 'projects') renderProjects();
+            if (key === 'settings') { renderGhConnInfo(); renderAdminAdmins(); }
+        }
+
+        /* ---------- محاسبه وضعیت چرخه کاری هر پرسنل ---------- */
+        function cycleStatusText(user) {
+            const proj = DB.projects.find(p => p.code === user.project);
+            if (!proj || !user.cycleStart) return '<span style="color:#94a3b8;">تعریف‌نشده</span>';
+            const start = new Date(user.cycleStart + 'T00:00:00');
+            const now = new Date();
+            const diffDays = Math.floor((now - start) / 86400000);
+            if (diffDays < 0) return '<span style="color:#94a3b8;">هنوز شروع نشده</span>';
+            const cycleLen = (proj.workDays || 1) + (proj.restDays || 1);
+            const pos = diffDays % cycleLen;
+            if (pos < proj.workDays) return `<span class="badge badge-success">روز ${pos + 1} کار (از ${proj.workDays})</span>`;
+            return `<span class="badge badge-warning">روز ${pos - proj.workDays + 1} استراحت (از ${proj.restDays})</span>`;
+        }
+
+        /* ---------- مانیتورینگ زنده ---------- */
+        function renderLiveMonitor() {
+            const logs = DB.worklogs || [];
+            const users = DB.users || [];
+            const tbody = document.getElementById('live-monitor-tbody');
+            const q = (document.getElementById('live-search') && document.getElementById('live-search').value || '').trim().toLowerCase();
+            tbody.innerHTML = '';
+
+            let filtered = logs;
+            if (q) filtered = logs.filter(l => (l.name || '').toLowerCase().includes(q));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="padding:16px; color:#64748b;">رکوردی ثبت نشده است. پرسنل از اپلیکیشن خود ورود بزنند.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(l => {
+                const usr = users.find(u => u.username === l.user) || { roleTitle: 'پرسنل فیلد', photo: '' };
+                const avatarHtml = usr.photo ? `<img src="${esc(usr.photo)}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">` : `<div style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; margin:0 auto;">${esc((l.name||'?').charAt(0))}</div>`;
+                const projName = (DB.projects.find(p => p.code === l.project) || {}).name || l.project || '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${avatarHtml}</td>
+                        <td><b>${esc(l.name)}</b></td>
+                        <td>${esc(usr.roleTitle)}</td>
+                        <td><b>${esc(projName)}</b></td>
+                        <td style="color:var(--success); direction:ltr; font-weight:bold;">${esc(l.start) || '--:--'}</td>
+                        <td style="color:var(--danger); direction:ltr;">${esc(l.end) || 'در حال کار سر شیفت'}</td>
+                        <td>${usr.username ? cycleStatusText(usr) : '-'}</td>
+                        <td style="text-align:right; font-size:0.75rem;">${esc(l.desc) || 'شیفت فعال'}</td>
+                        <td><span class="badge ${l.end ? 'badge-info' : 'badge-success'}">${l.end ? 'پایان شیفت' : 'حاضر در کارگاه'}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* ---------- تاییدات تردد ---------- */
+        function renderApprovals() {
+            const logs = DB.worklogs || [];
+            const tbody = document.getElementById('approvals-tbody');
+            tbody.innerHTML = '';
+            const pendings = logs.filter(l => l.approval === 'pending');
+            if (pendings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="padding:16px; color:#64748b;">✓ تمام ترددهای شیفت تایید شده‌اند.</td></tr>';
+                return;
+            }
+            pendings.forEach(l => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${esc(l.name)}</b></td>
+                        <td>${esc(l.date)}</td>
+                        <td>${esc(l.start)} تا ${esc(l.end) || 'نامشخص'}</td>
+                        <td><b>${esc(l.project)}</b></td>
+                        <td style="text-align:right; font-size:0.78rem;">${esc(l.desc)}</td>
+                        <td><span class="badge badge-warning">در انتظار تایید</span></td>
+                        <td>
+                            <div style="display:flex; gap:4px; justify-content:center;">
+                                <button class="btn btn-sm btn-success" onclick="approveLog(${l.id})">تایید</button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectLog(${l.id})">رد</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function approveLog(id) {
+            const f = DB.worklogs.find(x => x.id === id);
+            if (f) f.approval = 'approved';
+            if (await commitDb('approve worklog ' + id)) { renderApprovals(); renderLiveMonitor(); updateAdminKPIs(); }
+        }
+
+        async function rejectLog(id) {
+            const reason = prompt('علت رد کارکرد:');
+            if (!reason) return;
+            const f = DB.worklogs.find(x => x.id === id);
+            if (f) { f.approval = 'rejected'; f.rejectReason = reason; }
+            if (await commitDb('reject worklog ' + id)) { renderApprovals(); renderLiveMonitor(); updateAdminKPIs(); }
+        }
+
+        async function approveAllPendingLogs() {
+            DB.worklogs.forEach(x => { if (x.approval === 'pending') x.approval = 'approved'; });
+            if (await commitDb('bulk approve worklogs')) { renderApprovals(); renderLiveMonitor(); updateAdminKPIs(); alert('✓ تمام ترددهای در انتظار تایید شدند.'); }
+        }
+
+        /* ---------- اضافه‌کار منزل ---------- */
+        function renderHomeOvertime() {
+            const ot = DB.ot || [];
+            const tbody = document.getElementById('home-ot-tbody');
+            tbody.innerHTML = '';
+            if (ot.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="padding:16px; color:#64748b;">موردی ثبت نشده است.</td></tr>';
+                return;
+            }
+            ot.forEach(o => {
+                const isP = (o.status || '').includes('انتظار');
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${esc(o.name)}</b></td>
+                        <td>${esc(o.date)}</td>
+                        <td><b style="color:var(--purple);">${esc(o.hours)} ساعت</b></td>
+                        <td><span class="badge badge-purple">${esc(o.location)}</span></td>
+                        <td>${esc(o.task)}</td>
+                        <td style="text-align:right; font-size:0.75rem;">${esc(o.desc)}</td>
+                        <td><span class="badge ${isP ? 'badge-warning' : 'badge-success'}">${esc(o.status)}</span></td>
+                        <td>${isP ? `<button class="btn btn-sm btn-success" onclick="approveOT(${o.id})">تایید</button>` : 'تاییدشده'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function approveOT(id) {
+            const f = DB.ot.find(x => x.id === id);
+            if (f) f.status = 'تایید شده';
+            if (await commitDb('approve ot ' + id)) { renderHomeOvertime(); updateAdminKPIs(); alert('✓ اضافه‌کار منزل تایید شد.'); }
+        }
+
+        async function approveAllPendingOT() {
+            DB.ot.forEach(x => x.status = 'تایید شده');
+            if (await commitDb('bulk approve ot')) { renderHomeOvertime(); updateAdminKPIs(); alert('✓ تمام اضافه‌کارها تایید شدند.'); }
+        }
+
+        /* ---------- مرخصی ---------- */
+        function renderLeaves() {
+            const lv = DB.leaves || [];
+            const tbody = document.getElementById('leaves-tbody');
+            tbody.innerHTML = '';
+            if (lv.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:16px; color:#64748b;">درخواستی نیست.</td></tr>';
+                return;
+            }
+            lv.forEach(l => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${esc(l.name)}</b></td>
+                        <td><span class="badge badge-info">${esc(l.type)}</span></td>
+                        <td>${esc(l.period)}</td>
+                        <td style="text-align:right;">${esc(l.reason)}</td>
+                        <td><span class="badge badge-warning">${esc(l.status)}</span></td>
+                        <td><button class="btn btn-sm btn-success" onclick="approveLv(${l.id})">تایید</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function approveLv(id) {
+            const f = DB.leaves.find(x => x.id === id);
+            if (f) f.status = 'تایید شده';
+            if (await commitDb('approve leave ' + id)) { renderLeaves(); updateAdminKPIs(); alert('✓ مرخصی تایید شد.'); }
+        }
+
+        /* ---------- پرسنل ---------- */
+        function populateAdminDropdowns() {
+            const empSel = document.getElementById('pr-admin-employee');
+            const users = DB.users || [];
+            if (empSel) {
+                const prevVal = empSel.value;
+                empSel.innerHTML = '';
+                users.forEach(u => empSel.innerHTML += `<option value="${esc(u.username)}">${esc(u.name)}</option>`);
+                if (prevVal) empSel.value = prevVal;
+            }
+            const prjSel = document.getElementById('stf-project');
+            if (prjSel) {
+                prjSel.innerHTML = '';
+                (DB.projects || []).forEach(p => prjSel.innerHTML += `<option value="${esc(p.code)}">${esc(p.name)}</option>`);
+            }
+        }
+
+        function renderAdminUsers() {
+            const users = DB.users || [];
+            const tbody = document.getElementById('admin-users-tbody');
+            const q = (document.getElementById('users-search') && document.getElementById('users-search').value || '').trim().toLowerCase();
+            tbody.innerHTML = '';
+            let filtered = users;
+            if (q) filtered = users.filter(u => (u.name||'').toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q) || (u.personnelNo||'').toLowerCase().includes(q));
+            filtered.forEach(u => {
+                const avatar = u.photo ? `<img src="${esc(u.photo)}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">` : `<div style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; margin:0 auto;">${esc((u.name||'?').charAt(0))}</div>`;
+                const projName = (DB.projects.find(p => p.code === u.project) || {}).name || u.project || '-';
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${avatar}</td>
+                        <td><b>${esc(u.name)}</b></td>
+                        <td><code>${esc(u.personnelNo || 'SRJ')}</code></td>
+                        <td><code>${esc(u.username)}</code></td>
+                        <td>${esc(u.department || '-')}</td>
+                        <td>${esc(u.roleTitle)}</td>
+                        <td><b>${esc(projName)}</b></td>
+                        <td>${esc(u.cycleStart) || '-'}</td>
+                        <td>
+                            <div style="display:flex; gap:4px; justify-content:center;">
+                                <button class="btn btn-sm btn-outline" onclick="editStaff(${u.id})">ویرایش</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteStaff(${u.id})">حذف</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openNewStaffModal() {
+            document.getElementById('stf-edit-id').value = '';
+            document.getElementById('staff-modal-title').innerText = '👤 تعریف پرسنل جدید';
+            document.getElementById('stf-name').value = '';
+            document.getElementById('stf-username').value = '';
+            document.getElementById('stf-password').value = '1234';
+            document.getElementById('stf-role-title').value = '';
+            document.getElementById('stf-personnel-no').value = '';
+            document.getElementById('stf-cycle-start').value = '';
+            document.getElementById('stf-photo-preview').style.display = 'none';
+            populateAdminDropdowns();
+            tempPhotoData = '';
+            document.getElementById('modal-staff').style.display = 'flex';
+        }
+
+        function previewStaffPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    tempPhotoData = e.target.result;
+                    const prev = document.getElementById('stf-photo-preview');
+                    prev.src = tempPhotoData;
+                    prev.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleSaveStaff(e) {
+            e.preventDefault();
+            const id = document.getElementById('stf-edit-id').value;
+            const name = document.getElementById('stf-name').value.trim();
+            const username = document.getElementById('stf-username').value.trim();
+            const password = document.getElementById('stf-password').value.trim();
+            const roleTitle = document.getElementById('stf-role-title').value.trim();
+            const personnelNo = document.getElementById('stf-personnel-no').value.trim();
+            const project = document.getElementById('stf-project').value;
+            const cycleStart = document.getElementById('stf-cycle-start').value;
+            const urlPhoto = document.getElementById('stf-photo-url').value.trim();
+            const finalPhoto = tempPhotoData || urlPhoto || '';
+
+            if (!id && DB.users.some(u => u.username === username)) { alert('این یوزرنیم قبلاً استفاده شده است.'); return; }
+
+            if (id) {
+                const f = DB.users.find(x => x.id === parseInt(id));
+                if (f) {
+                    f.name = name; f.roleTitle = roleTitle; f.personnelNo = personnelNo;
+                    f.project = project; f.cycleStart = cycleStart;
+                    if (finalPhoto) f.photo = finalPhoto;
+                }
+            } else {
+                DB.users.push({
+                    id: Date.now(), username, password, name, roleTitle, personnelNo,
+                    project, department: 'اکتشاف', role: 'staff', photo: finalPhoto, cycleStart
+                });
+            }
+            if (await commitDb('save staff ' + username)) {
+                closeModal('modal-staff');
+                renderAdminUsers();
+                populateAdminDropdowns();
+                alert('✓ پرسنل با موفقیت ذخیره شد.');
+            }
+        }
+
+        function editStaff(id) {
+            const u = DB.users.find(x => x.id === id);
+            if (!u) return;
+            populateAdminDropdowns();
+            document.getElementById('stf-edit-id').value = u.id;
+            document.getElementById('staff-modal-title').innerText = '✏️ ویرایش: ' + u.name;
+            document.getElementById('stf-name').value = u.name;
+            document.getElementById('stf-username').value = u.username;
+            document.getElementById('stf-password').value = u.password;
+            document.getElementById('stf-role-title').value = u.roleTitle;
+            document.getElementById('stf-personnel-no').value = u.personnelNo || '';
+            document.getElementById('stf-project').value = u.project || '';
+            document.getElementById('stf-cycle-start').value = u.cycleStart || '';
+            tempPhotoData = u.photo || '';
+            if (tempPhotoData) {
+                const prev = document.getElementById('stf-photo-preview');
+                prev.src = tempPhotoData;
+                prev.style.display = 'block';
+            } else {
+                document.getElementById('stf-photo-preview').style.display = 'none';
+            }
+            document.getElementById('modal-staff').style.display = 'flex';
+        }
+
+        async function deleteStaff(id) {
+            const u = DB.users.find(x => x.id === id);
+            if (!u) return;
+            if (!confirm(`پرسنل «${u.name}» حذف شود؟ این عمل قابل بازگشت نیست.`)) return;
+            DB.users = DB.users.filter(x => x.id !== id);
+            if (await commitDb('delete staff ' + id)) { renderAdminUsers(); populateAdminDropdowns(); }
+        }
+
+        /* ---------- پروژه‌ها و چرخه کاری ---------- */
+        function renderProjects() {
+            const tbody = document.getElementById('admin-projects-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            (DB.projects || []).forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><code>${esc(p.code)}</code></td>
+                        <td><b>${esc(p.name)}</b></td>
+                        <td>${esc(p.radius)} متر</td>
+                        <td><span class="badge badge-success">${esc(p.workDays)} روز</span></td>
+                        <td><span class="badge badge-warning">${esc(p.restDays)} روز</span></td>
+                        <td>
+                            <div style="display:flex; gap:4px; justify-content:center;">
+                                <button class="btn btn-sm btn-outline" onclick="editProject('${esc(p.code)}')">ویرایش</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteProject('${esc(p.code)}')">حذف</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openNewProjectModal() {
+            document.getElementById('prj-edit-code').value = '';
+            document.getElementById('project-modal-title').innerText = '📍 تعریف پروژه جدید';
+            document.getElementById('prj-code').value = '';
+            document.getElementById('prj-code').disabled = false;
+            document.getElementById('prj-name').value = '';
+            document.getElementById('prj-radius').value = 250;
+            document.getElementById('prj-work-days').value = 30;
+            document.getElementById('prj-rest-days').value = 10;
+            document.getElementById('modal-project').style.display = 'flex';
+        }
+
+        function editProject(code) {
+            const p = DB.projects.find(x => x.code === code);
+            if (!p) return;
+            document.getElementById('prj-edit-code').value = p.code;
+            document.getElementById('project-modal-title').innerText = '✏️ ویرایش پروژه: ' + p.name;
+            document.getElementById('prj-code').value = p.code;
+            document.getElementById('prj-code').disabled = true;
+            document.getElementById('prj-name').value = p.name;
+            document.getElementById('prj-radius').value = p.radius;
+            document.getElementById('prj-work-days').value = p.workDays;
+            document.getElementById('prj-rest-days').value = p.restDays;
+            document.getElementById('modal-project').style.display = 'flex';
+        }
+
+        async function handleSaveProject(e) {
+            e.preventDefault();
+            const editCode = document.getElementById('prj-edit-code').value;
+            const code = document.getElementById('prj-code').value.trim();
+            const name = document.getElementById('prj-name').value.trim();
+            const radius = parseFloat(document.getElementById('prj-radius').value) || 0;
+            const workDays = parseInt(document.getElementById('prj-work-days').value) || 1;
+            const restDays = parseInt(document.getElementById('prj-rest-days').value) || 1;
+
+            if (editCode) {
+                const p = DB.projects.find(x => x.code === editCode);
+                if (p) { p.name = name; p.radius = radius; p.workDays = workDays; p.restDays = restDays; }
+            } else {
+                if (DB.projects.some(p => p.code === code)) { alert('این کد پروژه قبلاً استفاده شده است.'); return; }
+                DB.projects.push({ code, name, radius, workDays, restDays });
+            }
+            if (await commitDb('save project ' + code)) {
+                closeModal('modal-project');
+                renderProjects();
+                populateAdminDropdowns();
+                renderLiveMonitor();
+                alert('✓ پروژه ذخیره شد.');
+            }
+        }
+
+        async function deleteProject(code) {
+            if (DB.users.some(u => u.project === code)) { alert('این پروژه به یک یا چند پرسنل تخصیص داده شده و قابل حذف نیست. ابتدا پروژه آن‌ها را تغییر دهید.'); return; }
+            if (!confirm('این پروژه حذف شود؟')) return;
+            DB.projects = DB.projects.filter(p => p.code !== code);
+            if (await commitDb('delete project ' + code)) { renderProjects(); populateAdminDropdowns(); }
+        }
+
+        /* ---------- مدیران سیستم ---------- */
+        function renderGhConnInfo() {
+            const box = document.getElementById('gh-conn-info');
+            if (!box) return;
+            const cfg = ghConfig();
+            if (!cfg) { box.innerHTML = 'تنظیم نشده'; return; }
+            box.innerHTML = `
+                <b>مخزن:</b> ${esc(cfg.owner)}/${esc(cfg.repo)}<br>
+                <b>شاخه:</b> ${esc(cfg.branch)}<br>
+                <b>مسیر فایل داده:</b> ${esc(cfg.path)}
+            `;
+        }
+
+        function renderAdminAdmins() {
+            const tbody = document.getElementById('admin-admins-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            (DB.admins || []).forEach(a => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${esc(a.name)}</b></td>
+                        <td><code>${esc(a.username)}</code></td>
+                        <td>
+                            <div style="display:flex; gap:4px; justify-content:center;">
+                                <button class="btn btn-sm btn-outline" onclick="editAdminUser('${esc(a.username)}')">ویرایش</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteAdminUser('${esc(a.username)}')">حذف</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openNewAdminModal() {
+            document.getElementById('adm-edit-username').value = '';
+            document.getElementById('admin-modal-title').innerText = '👤 افزودن مدیر جدید';
+            document.getElementById('adm-name').value = '';
+            document.getElementById('adm-username').value = '';
+            document.getElementById('adm-username').disabled = false;
+            document.getElementById('adm-password').value = '';
+            document.getElementById('modal-admin').style.display = 'flex';
+        }
+
+        function editAdminUser(username) {
+            const a = DB.admins.find(x => x.username === username);
+            if (!a) return;
+            document.getElementById('adm-edit-username').value = a.username;
+            document.getElementById('admin-modal-title').innerText = '✏️ ویرایش مدیر: ' + a.name;
+            document.getElementById('adm-name').value = a.name;
+            document.getElementById('adm-username').value = a.username;
+            document.getElementById('adm-username').disabled = true;
+            document.getElementById('adm-password').value = a.password;
+            document.getElementById('modal-admin').style.display = 'flex';
+        }
+
+        async function handleSaveAdmin(e) {
+            e.preventDefault();
+            const editUsername = document.getElementById('adm-edit-username').value;
+            const name = document.getElementById('adm-name').value.trim();
+            const username = document.getElementById('adm-username').value.trim();
+            const password = document.getElementById('adm-password').value.trim();
+
+            if (editUsername) {
+                const a = DB.admins.find(x => x.username === editUsername);
+                if (a) { a.name = name; a.password = password; }
+            } else {
+                if (DB.admins.some(a => a.username === username)) { alert('این یوزرنیم قبلاً استفاده شده است.'); return; }
+                DB.admins.push({ username, password, name });
+            }
+            if (await commitDb('save admin ' + username)) {
+                closeModal('modal-admin');
+                renderAdminAdmins();
+                alert('✓ مدیر ذخیره شد.');
+            }
+        }
+
+        async function deleteAdminUser(username) {
+            if (DB.admins.length <= 1) { alert('حداقل باید یک مدیر در سیستم باقی بماند.'); return; }
+            if (currentAdmin && currentAdmin.username === username) { alert('نمی‌توانید حساب کاربری خودتان را در حین ورود حذف کنید.'); return; }
+            if (!confirm('این مدیر حذف شود؟')) return;
+            DB.admins = DB.admins.filter(a => a.username !== username);
+            if (await commitDb('delete admin ' + username)) renderAdminAdmins();
+        }
+
+        /* ---------- KPI ---------- */
+        function updateAdminKPIs() {
+            const logs = DB.worklogs || [];
+            const ot = DB.ot || [];
+            const lv = DB.leaves || [];
+
+            const present = logs.filter(l => !l.end).length;
+            document.getElementById('kpi-present-count').innerText = present;
+            document.getElementById('kpi-pending-punches').innerText = logs.filter(l => l.approval === 'pending').length;
+            document.getElementById('kpi-pending-ot').innerText = ot.filter(o => (o.status||'').includes('انتظار')).length;
+            document.getElementById('kpi-leave-count').innerText = lv.filter(l => (l.status||'').includes('انتظار')).length;
+
+            document.getElementById('sb-pending-count').innerText = logs.filter(l => l.approval === 'pending').length;
+            document.getElementById('sb-ot-count').innerText = ot.filter(o => (o.status||'').includes('انتظار')).length;
+            document.getElementById('sb-leaves-count').innerText = lv.filter(l => (l.status||'').includes('انتظار')).length;
+        }
+
+        /* ---------- حقوق و دستمزد ---------- */
+        function onAdminPayrollChange() { pullAdminAttendanceForPayroll(); }
+
+        function pullAdminAttendanceForPayroll() {
+            const u = document.getElementById('pr-admin-employee').value;
+            const m = document.getElementById('pr-admin-month').value.trim();
+            const usr = DB.users.find(x => x.username === u);
+            if (!usr) return;
+
+            const matching = DB.worklogs.filter(l => l.user === u && l.approval === 'approved' && (!m || (l.date||'').startsWith(m)));
+            const workDays = matching.filter(l => l.status === 'حضور').length;
+
+            let totalOt = 0;
+            matching.forEach(l => { if (l.otHours) totalOt += parseFloat(l.otHours); });
+            DB.ot.filter(o => o.user === u && o.status === 'تایید شده' && (!m || (o.date||'').startsWith(m))).forEach(o => totalOt += parseFloat(o.hours));
+
+            document.getElementById('pr-admin-summary').innerHTML = `
+                📊 <b>کارکرد تاییدشده ${esc(m)} برای ${esc(usr.name)}:</b> حضور: <b>${workDays} روز</b> | اضافه‌کار تاییدشده: <b>${totalOt} ساعت</b>
+            `;
+            document.getElementById('pr-adm-ot-hours').value = totalOt;
+            calcAdminPayroll();
+        }
+
+        function calcAdminPayroll() {
+            const base = parseFloat(document.getElementById('pr-adm-base').value) || 0;
+            const housing = parseFloat(document.getElementById('pr-adm-housing').value) || 0;
+            const bonus = parseFloat(document.getElementById('pr-adm-bonus').value) || 0;
+            const otH = parseFloat(document.getElementById('pr-adm-ot-hours').value) || 0;
+            const otRate = 195000;
+            const otPay = otH * otRate;
+
+            const gross = base + housing + bonus + otPay;
+            const ins = 2700000;
+            const tax = 1950000;
+            const ded = ins + tax;
+            const net = Math.max(0, gross - ded);
+
+            document.getElementById('pr-adm-gross').innerText = Math.round(gross).toLocaleString('fa-IR') + ' تومان';
+            document.getElementById('pr-adm-ded').innerText = Math.round(ded).toLocaleString('fa-IR') + ' تومان';
+            document.getElementById('pr-adm-net').innerText = Math.round(net).toLocaleString('fa-IR') + ' تومان';
+        }
+
+        async function issueAdminPayslip() {
+            const u = document.getElementById('pr-admin-employee').value;
+            const usr = DB.users.find(x => x.username === u);
+            if (!usr) return;
+            const m = document.getElementById('pr-admin-month').value;
+            const gross = parseFloat(document.getElementById('pr-adm-gross').innerText.replace(/[^0-9]/g, '')) || 0;
+            const ded = parseFloat(document.getElementById('pr-adm-ded').innerText.replace(/[^0-9]/g, '')) || 0;
+            const net = parseFloat(document.getElementById('pr-adm-net').innerText.replace(/[^0-9]/g, '')) || 0;
+
+            DB.payslips.unshift({
+                id: Date.now(),
+                username: usr.username,
+                name: usr.name,
+                personnelNo: usr.personnelNo || 'SRJ-1000',
+                month: m,
+                gross, deductions: ded, net,
+                issueDate: new Intl.DateTimeFormat('fa-IR').format(new Date())
+            });
+            if (await commitDb('issue payslip ' + usr.username)) {
+                renderAdminPayslips();
+                alert(`✓ فیش حقوقی برای ${usr.name} صادر شد.`);
+            }
+        }
+
+        function renderAdminPayslips() {
+            const slips = DB.payslips || [];
+            const tbody = document.getElementById('admin-payslips-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (slips.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="padding:16px; color:#64748b;">فیشی صادر نشده است.</td></tr>'; return; }
+            slips.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${esc(s.name)}</b></td><td><code>${esc(s.personnelNo)}</code></td><td>${esc(s.month)}</td>
+                        <td style="color:var(--success);">${Math.round(s.gross).toLocaleString('fa-IR')}</td>
+                        <td style="color:var(--danger);">${Math.round(s.deductions).toLocaleString('fa-IR')}</td>
+                        <td style="color:var(--accent); font-weight:800;">${Math.round(s.net).toLocaleString('fa-IR')}</td>
+                        <td>${esc(s.issueDate)}</td><td><button class="btn btn-sm btn-outline" onclick="alert('چاپ فیش')">چاپ</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        /* ---------- اکسل ---------- */
+        function exportExactCompanyExcel() {
+            const logs = (DB.worklogs || []).filter(l => l.approval === 'approved');
+            const aoa = [
+                ["SRJ Group - گزارش کارکرد ماهانه تاییدشده پرسنل", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+                ["SRJ - توضیحات", "SRJ - شرح اضافه کار", "SRJ - ساعت", "", "SRJ - محل", "SRJ - شرح کارکرد", "SRJ - ساعت خروج", "SRJ - ساعت ورود", "SRJ - سرویس", "", "", "SRJ - پروژه", "SRJ - ماموریت", "SRJ - حضور", "SRJ - تاریخ"],
+                ["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+            ];
+            logs.forEach(r => {
+                aoa.push([r.desc || "", r.otHours || "", "", "", r.env || "فیلدی", r.desc || "", r.end || "", r.start || "", "✓", "", "✓", r.project || "", r.mission || "", r.status || "", r.date || ""]);
+            });
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(aoa);
+            ws['!views'] = [{ RTL: true }];
+            XLSX.utils.book_append_sheet(wb, ws, "کارکرد تاییدشده");
+            XLSX.writeFile(wb, "گزارش_کارکرد_تاییدشده_SRJ.xlsx");
+        }
+
+        function renderCompanySheet() {
+            const logs = (DB.worklogs || []).filter(l => l.approval === 'approved');
+            const tbody = document.getElementById('company-sheet-tbody');
+            tbody.innerHTML = '';
+            logs.forEach((r, idx) => {
+                tbody.innerHTML += `<tr><td>${idx + 1}</td><td><b>${esc(r.name)}</b></td><td>${esc(r.date)}</td><td>${esc(r.status)}</td><td><b>${esc(r.project)}</b></td><td>${esc(r.start)} الی ${esc(r.end)}</td><td style="text-align:right;">${esc(r.desc)}</td><td>${esc(r.env)}</td><td>${esc(r.otHours) || 0}</td><td><span class="badge badge-success">تاییدشده</span></td></tr>`;
+            });
+        }
+
+        let tempPhotoData = '';
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
