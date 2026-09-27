@@ -63,7 +63,21 @@
       "restDays": 8
     }
   ],
-  "worklogs": [],
+  "worklogs": [
+    {
+      "id": 1790497816026,
+      "user": "sina",
+      "name": "سینا تولائی",
+      "date": "۱۴۰۵/۰۷/۰۵",
+      "status": "حضور",
+      "project": "کمپ معدنی افغانستان",
+      "start": "۱۳:۰۰",
+      "end": null,
+      "desc": "حضور فعال در کارگاه",
+      "approval": "pending",
+      "otHours": ""
+    }
+  ],
   "ot": [],
   "leaves": [
     {
