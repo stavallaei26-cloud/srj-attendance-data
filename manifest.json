@@ -1,0 +1,73 @@
+{
+  "name": "اپلیکیشن پرسنل SRJ",
+  "short_name": "SRJ پرسنل",
+  "description": "ثبت تردد، اضافه‌کار، مرخصی، نامه‌ها و فیش حقوقی پرسنل SRJ",
+  "start_url": "./SRJ_Personnel_App.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "fa",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "ثبت ورود",
+      "short_name": "ورود",
+      "url": "./SRJ_Personnel_App.html?action=in",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "ثبت خروج",
+      "short_name": "خروج",
+      "url": "./SRJ_Personnel_App.html?action=out",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "صندوق دریافت",
+      "short_name": "نامه‌ها",
+      "url": "./SRJ_Personnel_App.html?view=inbox",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "ویجت وضعیت",
+      "short_name": "ویجت",
+      "url": "./SRJ_Widget.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
