@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد جامع مدیریت و کنترل عملیات - SRJ Group</title>
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--primary:#0f172a;--sidebar-bg:#0b1120;--accent:#0097cc;--accent-hover:#007299;--accent-bg:#e0f4fb;--gold:#d97706;--gold-light:#fef3c7;--success:#16a34a;--success-light:#dcfce7;--danger:#dc2626;--danger-light:#fee2e2;--purple:#7c3aed;--purple-light:#ede9fe;--bg:#f1f5f9;--card:#fff;--text-muted:#64748b;--border:#e2e8f0;--radius-md:14px;--radius-lg:20px;--shadow-sm:0 1px 3px rgba(0,0,0,.05)}
+*{box-sizing:border-box;font-family:'Vazirmatn',sans-serif!important;margin:0;padding:0}
+body{background:var(--bg);color:var(--primary);min-height:100vh}
+button{font-family:inherit}
+.center-screen{min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#0f172a,#1e1b4b);position:fixed;inset:0;z-index:99999;overflow-y:auto}
+.auth-card{background:#fff;width:100%;max-width:440px;border-radius:var(--radius-lg);padding:28px;box-shadow:0 20px 45px rgba(0,0,0,.25);text-align:center}
+.auth-card img.lg{height:58px;margin-bottom:8px}
+.auth-card h2{font-size:1.1rem;font-weight:900;margin-bottom:6px}
+.auth-card p.sub{font-size:.8rem;color:var(--text-muted);margin-bottom:18px}
+.auth-note{background:#f1f5f9;border-radius:10px;padding:10px 12px;font-size:.72rem;color:#475569;margin-top:14px;line-height:1.9;text-align:right}
+.auth-error{background:var(--danger-light);color:var(--danger);border-radius:10px;padding:8px 12px;font-size:.78rem;margin-bottom:12px;display:none;text-align:right;line-height:1.8}
+#admin-app{display:none}
+.admin-sidebar{width:270px;background:var(--sidebar-bg);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;z-index:1000;box-shadow:-4px 0 20px rgba(0,0,0,.25);transition:transform .25s}
+.sidebar-brand{padding:18px 16px;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid rgba(255,255,255,.08);text-align:center}
+.sidebar-brand img{height:44px;background:#fff;padding:4px 10px;border-radius:10px;margin-bottom:8px}
+.sidebar-brand h2{font-size:.95rem}.sidebar-brand p{font-size:.68rem;color:#94a3b8;margin-top:2px}
+.sidebar-menu{padding:12px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.menu-category{font-size:.68rem;color:#64748b;font-weight:800;padding:10px 12px 4px}
+.sidebar-link{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;color:#94a3b8;border-radius:12px;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;user-select:none}
+.sidebar-link:hover{background:rgba(255,255,255,.06);color:#fff}
+.sidebar-link.active{background:linear-gradient(90deg,#0097cc,#007299);color:#fff;box-shadow:0 4px 14px rgba(0,151,204,.4)}
+.link-inner{display:flex;align-items:center;gap:10px}
+.badge-count{background:var(--danger);color:#fff;font-size:.68rem;font-weight:900;padding:2px 7px;border-radius:12px;min-width:20px;text-align:center}
+.sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.2);font-size:.75rem}
+.admin-main{margin-right:270px;padding:18px 22px;min-width:0}
+.admin-topbar{background:#fff;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow-sm);flex-wrap:wrap;gap:10px}
+.topbar-title h1{font-size:1.1rem;font-weight:900}.topbar-title p{font-size:.76rem;color:var(--text-muted);margin-top:2px}
+.menu-toggle{display:none;background:var(--primary);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:1rem;cursor:pointer}
+.conn-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:800;cursor:pointer}
+.conn-ok{background:#dcfce7;color:#166534}.conn-syncing{background:#fef3c7;color:#92400e}.conn-error{background:#fee2e2;color:#991b1b}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid var(--border);padding:16px;border-radius:var(--radius-md);box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:space-between}
+.stat-icon-wrap{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.stat-info .lbl{font-size:.76rem;color:var(--text-muted);font-weight:700}.stat-info .val{font-size:1.5rem;font-weight:900;margin-top:2px}
+.card{background:var(--card);border-radius:var(--radius-md);padding:18px;margin-bottom:16px;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #f1f5f9;padding-bottom:10px;flex-wrap:wrap;gap:10px}
+.card-title{font-size:1rem;font-weight:800;display:flex;align-items:center;gap:8px}
+.table-responsive{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.8rem;min-width:820px;text-align:center}
+th,td{border:1px solid var(--border);padding:9px}th{background:#f8fafc;font-weight:800}tr:hover td{background:#f8fafc}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.form-group{margin-bottom:12px;text-align:right}
+label{display:block;margin-bottom:5px;font-size:.78rem;font-weight:700;color:#334155}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.86rem;background:#fff}
+textarea{resize:vertical}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 15px;border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{opacity:.92}.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-success{background:var(--success)}.btn-gold{background:var(--gold)}.btn-danger{background:var(--danger)}.btn-purple{background:var(--purple)}
+.btn-outline{background:#fff;border:1.5px solid var(--border);color:#334155}
+.btn-sm{padding:4px 10px;font-size:.73rem;border-radius:8px}.btn-block{width:100%;padding:11px}
+.badge{padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:800;display:inline-block;white-space:nowrap}
+.badge-success{background:var(--success-light);color:var(--success)}.badge-warning{background:var(--gold-light);color:var(--gold)}.badge-danger{background:var(--danger-light);color:var(--danger)}.badge-info{background:var(--accent-bg);color:var(--accent-hover)}.badge-purple{background:var(--purple-light);color:var(--purple)}
+.search-box{margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.search-box input{max-width:260px}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:10000;display:none;justify-content:center;align-items:center;padding:14px}
+.modal-content{background:#fff;width:100%;max-width:560px;border-radius:18px;padding:22px;box-shadow:0 25px 50px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto}
+.modal-content.wide{max-width:780px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.modal-header h3{font-size:1rem;font-weight:800}.close-modal-btn{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted)}
+.avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:900}
+.mail-row{display:flex;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff;text-align:right;align-items:flex-start}
+.mail-row.unread{background:#eff6ff;border-color:#93c5fd}.mail-row .subj{font-weight:800;font-size:.85rem}.mail-row .meta{font-size:.72rem;color:#64748b;margin-top:2px}
+.seg{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}.seg button{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;font-size:.78rem;font-weight:800;color:#475569;cursor:pointer}.seg button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.note{font-size:.76rem;color:var(--text-muted);line-height:1.9}
+.warn-box{background:#fef3c7;border:1px solid #fcd34d;color:#92400e;border-radius:10px;padding:8px 12px;font-size:.76rem;line-height:1.8;margin-bottom:10px}
+/* ---------- toast ---------- */
+#toast { position: fixed; bottom: 86px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 200000; pointer-events: none; padding: 0 12px; }
+.toast-item { background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 0.82rem; font-weight: 700; box-shadow: 0 8px 24px rgba(0,0,0,.25); max-width: 440px; text-align: center; transition: opacity .5s; line-height: 1.7; }
+.toast-item.ok { background: #166534; }
+.toast-item.err { background: #991b1b; }
+.toast-item.warn { background: #92400e; }
+
+/* ---------- سربرگ رسمی SRJ ---------- */
+.lh-doc { width: 100%; border-collapse: collapse; direction: rtl; color: #0f172a; font-size: 13px; }
+.lh-doc td { padding: 0; vertical-align: top; }
+.lh-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding-bottom: 10px; }
+.lh-brand { display: flex; align-items: center; gap: 12px; }
+.lh-brand img { height: 50px; width: auto; }
+.lh-co { font-size: 16px; font-weight: 900; color: #0f172a; }
+.lh-co-en { font-size: 10.5px; color: #64748b; direction: ltr; text-align: right; margin-top: 2px; }
+.lh-meta { font-size: 12px; line-height: 1.9; min-width: 150px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 5px 10px; background: #f8fafc; }
+.lh-bar { height: 4px; background: linear-gradient(90deg, #0097cc, #0f172a); border-radius: 3px; margin-bottom: 14px; }
+.lh-body { padding: 4px 2px 18px; line-height: 2; font-size: 13.5px; }
+.lh-title { font-size: 16px; font-weight: 900; margin: 0 0 10px; color: #0f172a; border-right: 4px solid #0097cc; padding-right: 10px; }
+.lh-foot { border-top: 2px solid #0097cc; padding-top: 8px; font-size: 10.5px; color: #475569; text-align: center; }
+.lh-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 14px; margin: 8px 0 12px; font-size: 12.5px; line-height: 1.9; }
+.lh-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 8px 0; }
+.lh-table th, .lh-table td { border: 1px solid #cbd5e1; padding: 5px 7px; text-align: center; }
+.lh-table th { background: #0f172a; color: #fff; }
+.lh-net { background: #e0f4fb; border: 1.5px solid #0097cc; border-radius: 10px; padding: 9px 14px; margin: 12px 0; font-size: 14px; }
+.lh-sign { display: flex; justify-content: space-between; margin-top: 34px; font-size: 12px; color: #334155; gap: 10px; }
+.lh-msg { white-space: pre-wrap; word-break: break-word; min-height: 60px; }
+.paper { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; box-shadow: 0 2px 12px rgba(15,23,42,.08); overflow-x: auto; }
+
+/* ---------- چاپ / ذخیره PDF ---------- */
+#print-area { display: none; }
+@media print {
+    @page { size: A4; margin: 12mm; }
+    html, body { background: #fff !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; }
+    .lh-doc thead { display: table-header-group; }
+    .lh-doc tfoot { display: table-footer-group; }
+    .lh-table tr, .lh-kv, .lh-net, .lh-sign { break-inside: avoid; }
+    .lh-table th, .lh-bar, .lh-meta, .lh-kv, .lh-net { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media(max-width:992px){.admin-sidebar{transform:translateX(100%)}.admin-sidebar.open{transform:none}.admin-main{margin-right:0;padding:12px}.grid-3,.grid-4,.grid-2{grid-template-columns:1fr}.menu-toggle{display:inline-block}}
+</style>
+</head>
+<body>
+
+<div id="screen-setup" class="center-screen"><div class="auth-card">
+  <img class="lg" data-logo alt="SRJ"><h2>⚙️ اتصال به فضای ذخیره‌سازی</h2>
+  <p class="sub">اطلاعات مخزن گیت‌هاب که به‌عنوان دیتابیس مشترک استفاده می‌شود</p>
+  <div class="auth-error" id="setup-error"></div>
+  <form onsubmit="handleSetupSubmit(event)" autocomplete="off">
+    <div class="form-group"><label>owner گیت‌هاب (یوزرنیم یا سازمان):</label><input type="text" id="cfg-owner" required autocapitalize="none"></div>
+    <div class="form-group"><label>نام مخزن (repository):</label><input type="text" id="cfg-repo" required autocapitalize="none"></div>
+    <div class="grid-2"><div class="form-group"><label>شاخه:</label><input type="text" id="cfg-branch" value="main" required></div><div class="form-group"><label>مسیر فایل داده:</label><input type="text" id="cfg-path" value="data/db.json" required></div></div>
+    <div class="form-group"><label>Personal Access Token:</label><input type="password" id="cfg-token" placeholder="github_pat_..." required></div>
+    <button type="submit" class="btn btn-success btn-block" id="setup-submit-btn">🔗 اتصال و شروع</button>
+  </form>
+  <div class="auth-note">⚠️ مخزن باید <b>خصوصی (Private)</b> باشد. توکن با دسترسی <b>Contents: Read and write</b> فقط روی همان مخزن بسازید.</div>
+</div></div>
+
+<div id="screen-login" class="center-screen"><div class="auth-card">
+  <img class="lg" data-logo alt="SRJ"><h2>🔐 ورود به پنل مدیریت SRJ</h2><p class="sub">با نام کاربری و رمز عبور خود وارد شوید</p>
+  <div class="auth-error" id="login-error"></div>
+  <form onsubmit="handleLoginSubmit(event)">
+    <div class="form-group"><label>نام کاربری:</label><input type="text" id="lg-username" required autocapitalize="none" autocomplete="username"></div>
+    <div class="form-group"><label>رمز عبور:</label><input type="password" id="lg-password" required autocomplete="current-password"></div>
+    <button type="submit" class="btn btn-success btn-block">ورود</button>
+  </form>
+  <div class="auth-note">راه‌اندازی اولیه: کاربر <code>admin</code> / رمز <code>admin123</code> — بعد از ورود از «تنظیمات سیستم» عوض کنید.<br><a href="#" onclick="resetGithubConfig();return false;">تغییر تنظیمات اتصال</a></div>
+</div></div>
+
+<div id="admin-app">
+<aside class="admin-sidebar" id="sidebar">
+  <div class="sidebar-brand"><img data-logo alt="SRJ"><h2>پنل جامع مدیریت SRJ</h2><p>کنترل تردد و کارکرد</p></div>
+  <nav class="sidebar-menu">
+    <div class="menu-category">نظارت و عملیات</div>
+    <a class="sidebar-link active" data-tab="live" onclick="switchAdminTab('live',this)"><div class="link-inner"><span>📡</span><span>مانیتورینگ زنده تردد</span></div></a>
+    <a class="sidebar-link" data-tab="approvals" onclick="switchAdminTab('approvals',this)"><div class="link-inner"><span>✅</span><span>کارتابل تاییدات تردد</span></div><span class="badge-count" id="sb-pending-count">0</span></a>
+    <a class="sidebar-link" data-tab="home-ot" onclick="switchAdminTab('home-ot',this)"><div class="link-inner"><span>🌙</span><span>تایید اضافه‌کار</span></div><span class="badge-count" id="sb-ot-count" style="background:var(--purple)">0</span></a>
+    <a class="sidebar-link" data-tab="leaves" onclick="switchAdminTab('leaves',this)"><div class="link-inner"><span>🏖️</span><span>مرخصی و مأموریت</span></div><span class="badge-count" id="sb-leaves-count" style="background:var(--gold)">0</span></a>
+    <a class="sidebar-link" data-tab="mail" onclick="switchAdminTab('mail',this)"><div class="link-inner"><span>✉️</span><span>نامه‌ها و پیام‌ها</span></div><span class="badge-count" id="sb-mail-count" style="background:#2563eb">0</span></a>
+    <div class="menu-category">مالی و گزارش‌گیری</div>
+    <a class="sidebar-link" data-tab="payroll" onclick="switchAdminTab('payroll',this)"><div class="link-inner"><span>💰</span><span>حقوق و صدور فیش</span></div></a>
+    <a class="sidebar-link" data-tab="reports" onclick="switchAdminTab('reports',this)"><div class="link-inner"><span>📥</span><span>گزارش و اکسل کارکرد</span></div></a>
+    <div class="menu-category">پیکربندی سازمان</div>
+    <a class="sidebar-link" data-tab="users" onclick="switchAdminTab('users',this)"><div class="link-inner"><span>👥</span><span>مدیریت پرسنل</span></div></a>
+    <a class="sidebar-link" data-tab="projects" onclick="switchAdminTab('projects',this)"><div class="link-inner"><span>📍</span><span>پروژه‌ها و چرخه کاری</span></div></a>
+    <a class="sidebar-link" data-tab="settings" onclick="switchAdminTab('settings',this)"><div class="link-inner"><span>⚙️</span><span>تنظیمات سیستم</span></div></a>
+  </nav>
+  <div class="sidebar-footer"><div><b id="sf-admin-name">مدیر</b><p style="color:#64748b;font-size:.66rem">متصل به مخزن مشترک</p></div><button class="btn btn-sm btn-danger" onclick="logoutAdmin()">خروج</button></div>
+</aside>
+
+<main class="admin-main">
+  <header class="admin-topbar">
+    <div style="display:flex;gap:10px;align-items:center"><button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title"><h1 id="tab-headline">📡 مانیتورینگ زنده</h1><p id="tab-subheadline">وضعیت لحظه‌ای حضور پرسنل</p></div></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="conn-badge conn-ok" id="conn-status" onclick="manualSync()">🟢 متصل</span>
+      <button class="btn btn-sm btn-outline" onclick="manualSync()">🔄 همگام‌سازی</button>
+    </div>
+  </header>
+
+  <section class="stats-grid">
+    <div class="stat-card"><div class="stat-info"><div class="lbl">اکنون سر شیفت</div><div class="val" id="kpi-present-count" style="color:var(--success)">0</div></div><div class="stat-icon-wrap" style="background:#dcfce7">👷‍♂️</div></div>
+    <div class="stat-card"><div class="stat-info"><div class="lbl">ترددهای نیازمند تایید</div><div class="val" id="kpi-pending-punches" style="color:var(--danger)">0</div></div><div class="stat-icon-wrap" style="background:#fee2e2">⏳</div></div>
+    <div class="stat-card"><div class="stat-info"><div class="lbl">اضافه‌کار در انتظار</div><div class="val" id="kpi-pending-ot" style="color:var(--purple)">0</div></div><div class="stat-icon-wrap" style="background:#ede9fe">🌙</div></div>
+    <div class="stat-card"><div class="stat-info"><div class="lbl">مرخصی در انتظار</div><div class="val" id="kpi-leave-count" style="color:var(--gold)">0</div></div><div class="stat-icon-wrap" style="background:#fef3c7">🏖️</div></div>
+  </section>
+
+  <section id="tab-live" class="admin-section">
+    <div class="card"><div class="card-header"><span class="card-title">📡 وضعیت زنده نیروها</span>
+      <div class="search-box" style="margin:0"><input type="text" id="live-search" placeholder="جست‌وجوی نام..." oninput="renderLiveMonitor()"><select id="live-filter" onchange="renderLiveMonitor()" style="max-width:170px"><option value="today">امروز و شیفت‌های باز</option><option value="open">فقط شیفت‌های باز</option><option value="all">همه</option></select></div></div>
+      <div class="table-responsive"><table><thead><tr><th>پرسنل</th><th>سمت</th><th>پروژه</th><th>تاریخ</th><th>ورود</th><th>خروج</th><th>مدت</th><th>چرخه</th><th>موقعیت</th><th>وضعیت</th></tr></thead><tbody id="live-monitor-tbody"></tbody></table></div></div>
+  </section>
+
+  <section id="tab-approvals" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title">✅ کارتابل تایید شیفت‌ها</span><button class="btn btn-sm btn-success" onclick="approveAllPendingLogs()">✓ تایید گروهی (فقط شیفت‌های بسته‌شده)</button></div>
+    <div class="table-responsive"><table><thead><tr><th>پرسنل</th><th>تاریخ</th><th>ورود</th><th>خروج</th><th>مدت</th><th>پروژه</th><th>گزارش</th><th>تصمیم</th></tr></thead><tbody id="approvals-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-home-ot" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title" style="color:var(--purple)">🌙 اضافه‌کار دورکاری (منزل/کمپ)</span><button class="btn btn-sm btn-purple" onclick="approveAllPendingOT()">✓ تایید همه در انتظارها</button></div>
+    <div class="table-responsive"><table><thead><tr><th>پرسنل</th><th>تاریخ</th><th>ساعت</th><th>محل</th><th>نوع کار</th><th>شرح</th><th>وضعیت</th><th>تصمیم</th></tr></thead><tbody id="home-ot-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-leaves" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title">🏖️ درخواست‌های مرخصی و مأموریت</span></div>
+    <div class="table-responsive"><table><thead><tr><th>پرسنل</th><th>نوع</th><th>بازه</th><th>علت</th><th>وضعیت</th><th>تصمیم</th></tr></thead><tbody id="leaves-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-mail" class="admin-section" style="display:none">
+    <div class="seg"><button id="mseg-inbox" onclick="setMailTab('inbox')">📥 پیام‌های پرسنل</button><button id="mseg-sent" onclick="setMailTab('sent')">📤 نامه‌های ارسالی</button><button id="mseg-compose" onclick="setMailTab('compose')">✍️ نوشتن نامه</button></div>
+    <div id="mail-pane-inbox"></div><div id="mail-pane-sent" style="display:none"></div>
+    <div id="mail-pane-compose" style="display:none"><div class="card">
+      <div class="card-header"><span class="card-title">✍️ نامه رسمی با سربرگ SRJ</span></div>
+      <form onsubmit="handleSendLetter(event)">
+        <div class="grid-2"><div class="form-group"><label>گیرنده:</label><select id="ml-to-type" onchange="fillMailTarget()"><option value="user">یک پرسنل</option><option value="project">همه پرسنل یک پروژه</option><option value="all">همه پرسنل</option></select></div>
+        <div class="form-group"><label id="ml-to-label">انتخاب پرسنل:</label><select id="ml-to-value"></select></div></div>
+        <div class="form-group"><label>موضوع:</label><input type="text" id="ml-subject" maxlength="140" required></div>
+        <div class="form-group"><label>متن نامه:</label><textarea id="ml-body" rows="8" maxlength="5000" required></textarea></div>
+        <button type="submit" class="btn btn-success">📨 ارسال نامه</button></form></div></div>
+  </section>
+
+  <section id="tab-payroll" class="admin-section" style="display:none">
+    <div class="card"><div class="card-header"><span class="card-title">💰 محاسبه حقوق و صدور فیش</span></div>
+      <div class="grid-3"><div class="form-group"><label>پرسنل:</label><select id="pr-admin-employee" onchange="pullAttendanceForPayroll()"></select></div>
+      <div class="form-group"><label>ماه (مثل 1405/07):</label><input type="text" id="pr-admin-month" oninput="pullAttendanceForPayroll()"></div>
+      <div class="form-group"><label>نرخ ساعتی اضافه‌کار (تومان):</label><input type="number" min="0" id="pr-adm-otrate" value="195000" oninput="calcPayroll()"></div></div>
+      <div class="warn-box" id="pr-admin-summary">پرسنل را انتخاب کنید...</div>
+      <div class="grid-4"><div class="form-group"><label>حقوق پایه:</label><input type="number" min="0" id="pr-adm-base" value="28500000" oninput="calcPayroll()"></div>
+      <div class="form-group"><label>حق مسکن:</label><input type="number" min="0" id="pr-adm-housing" value="4500000" oninput="calcPayroll()"></div>
+      <div class="form-group"><label>پاداش / مزایای فیلد:</label><input type="number" min="0" id="pr-adm-bonus" value="0" oninput="calcPayroll()"></div>
+      <div class="form-group"><label>ساعت اضافه‌کار:</label><input type="number" min="0" step="0.5" id="pr-adm-ot-hours" value="0" oninput="calcPayroll()"></div></div>
+      <div class="grid-2"><div class="form-group"><label>بیمه:</label><input type="number" min="0" id="pr-adm-ins" value="2700000" oninput="calcPayroll()"></div><div class="form-group"><label>مالیات:</label><input type="number" min="0" id="pr-adm-tax" value="1950000" oninput="calcPayroll()"></div></div>
+      <div class="grid-3" style="background:#f1f5f9;padding:12px;border-radius:10px;margin-bottom:12px;text-align:center"><div>ناخالص<div style="font-weight:900;color:var(--success)" id="pr-adm-gross">0</div></div><div>کسورات<div style="font-weight:900;color:var(--danger)" id="pr-adm-ded">0</div></div><div>خالص پرداختی<div style="font-weight:900;color:var(--accent);font-size:1.15rem" id="pr-adm-net">0</div></div></div>
+      <button class="btn btn-success btn-block" onclick="issueAdminPayslip()">🧾 صدور رسمی فیش و ارسال به صندوق پرسنل</button></div>
+    <div class="card"><div class="card-header"><span class="card-title">📚 آرشیو فیش‌های صادرشده</span></div>
+      <div class="table-responsive"><table><thead><tr><th>پرسنل</th><th>پرسنلی</th><th>ماه</th><th>ناخالص</th><th>کسورات</th><th>خالص</th><th>تاریخ</th><th>عملیات</th></tr></thead><tbody id="admin-payslips-tbody"></tbody></table></div></div>
+  </section>
+
+  <section id="tab-reports" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title">📥 گزارش کارکرد (سربرگ‌دار)</span>
+      <div class="search-box" style="margin:0"><input type="text" id="rep-month" placeholder="ماه: 1405/07" oninput="renderCompanySheet()" style="max-width:130px"><select id="rep-user" onchange="renderCompanySheet()" style="max-width:190px"></select>
+      <select id="rep-status" onchange="renderCompanySheet()" style="max-width:150px"><option value="approved">فقط تاییدشده</option><option value="all">همه (بجز ردشده)</option></select>
+      <button class="btn btn-success" onclick="exportCompanyExcel()">📥 اکسل</button><button class="btn btn-outline" onclick="printCompanyReport()">🖨️ PDF</button></div></div>
+    <div class="table-responsive"><table><thead><tr><th>ردیف</th><th>پرسنل</th><th>تاریخ</th><th>ورود</th><th>خروج</th><th>مدت</th><th>پروژه</th><th>شرح</th><th>اضافه‌کار</th><th>وضعیت</th></tr></thead><tbody id="company-sheet-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-users" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title">👥 مدیریت پرسنل و اکانت‌ها</span><button class="btn btn-gold" onclick="openNewStaffModal()">+ افزودن پرسنل</button></div>
+    <div class="search-box"><input type="text" id="users-search" placeholder="جست‌وجوی نام، یوزرنیم، شماره پرسنلی..." oninput="renderAdminUsers()"></div>
+    <div class="table-responsive"><table><thead><tr><th>تصویر</th><th>نام</th><th>پرسنلی</th><th>یوزرنیم</th><th>رمز</th><th>سمت</th><th>پروژه</th><th>شروع چرخه</th><th>عملیات</th></tr></thead><tbody id="admin-users-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-projects" class="admin-section" style="display:none"><div class="card">
+    <div class="card-header"><span class="card-title">📍 پروژه‌ها، ژئوفنس و چرخه کاری</span><button class="btn btn-gold" onclick="openNewProjectModal()">+ افزودن پروژه</button></div>
+    <p class="note" style="margin-bottom:10px">چرخه کاری = الگوی روزهای کار/استراحت (مثلاً افغانستان ۳۰/۱۰، ایران ۲۲/۸). اگر عرض و طول جغرافیایی مرکز پروژه را وارد کنید، اپ پرسنل هنگام ورود فاصله را می‌سنجد و خارج از شعاع را به شما نشان می‌دهد.</p>
+    <div class="table-responsive"><table><thead><tr><th>کد</th><th>نام</th><th>شعاع (متر)</th><th>مختصات مرکز</th><th>کار</th><th>استراحت</th><th>عملیات</th></tr></thead><tbody id="admin-projects-tbody"></tbody></table></div></div></section>
+
+  <section id="tab-settings" class="admin-section" style="display:none">
+    <div class="card"><div class="card-header"><span class="card-title">🏢 اطلاعات سربرگ رسمی (روی فیش، نامه، گزارش و اکسل)</span></div>
+      <form onsubmit="handleSaveLetterhead(event)"><div class="grid-2">
+        <div class="form-group"><label>نام شرکت (فارسی):</label><input type="text" id="lh-company"></div><div class="form-group"><label>نام لاتین:</label><input type="text" id="lh-latin"></div>
+        <div class="form-group"><label>شعار / زیرعنوان:</label><input type="text" id="lh-tagline"></div><div class="form-group"><label>آدرس:</label><input type="text" id="lh-address"></div>
+        <div class="form-group"><label>تلفن:</label><input type="text" id="lh-phone"></div><div class="form-group"><label>ایمیل:</label><input type="text" id="lh-email"></div>
+        <div class="form-group"><label>وب‌سایت:</label><input type="text" id="lh-website"></div></div>
+        <button class="btn btn-success">💾 ذخیره سربرگ</button> <button type="button" class="btn btn-outline" onclick="previewLetterhead()">👁️ پیش‌نمایش</button></form></div>
+    <div class="card"><div class="card-header"><span class="card-title">🔗 اتصال گیت‌هاب</span></div><div id="gh-conn-info" class="note"></div><button class="btn btn-outline" style="margin-top:10px" onclick="resetGithubConfig()">تغییر تنظیمات اتصال</button></div>
+    <div class="card"><div class="card-header"><span class="card-title">👤 مدیران پنل</span><button class="btn btn-gold" onclick="openNewAdminModal()">+ افزودن مدیر</button></div>
+      <div class="table-responsive"><table style="min-width:400px"><thead><tr><th>نام</th><th>یوزرنیم</th><th>عملیات</th></tr></thead><tbody id="admin-admins-tbody"></tbody></table></div></div>
+    <div class="card"><div class="card-header"><span class="card-title">🕘 گزارش تغییرات (لغو ورود/خروج پرسنل و اقدامات مدیران)</span></div>
+      <div class="table-responsive"><table style="min-width:600px"><thead><tr><th>تاریخ</th><th>ساعت</th><th>کاربر</th><th>اقدام</th><th>جزئیات</th></tr></thead><tbody id="audit-tbody"></tbody></table></div></div>
+  </section>
+</main>
+</div>
+
+<div id="modal-staff" class="modal-overlay"><div class="modal-content">
+  <div class="modal-header"><h3 id="staff-modal-title">پرسنل</h3><button class="close-modal-btn" onclick="closeModal('modal-staff')">×</button></div>
+  <form onsubmit="handleSaveStaff(event)"><input type="hidden" id="stf-edit-id">
+    <div class="form-group"><label>نام و نام خانوادگی:</label><input type="text" id="stf-name" required></div>
+    <div class="grid-2"><div class="form-group"><label>نام کاربری (انگلیسی، بدون فاصله):</label><input type="text" id="stf-username" required autocapitalize="none" placeholder="مثلاً ali.rezaei"></div><div class="form-group"><label>رمز عبور:</label><input type="text" id="stf-password" required></div></div>
+    <div class="grid-2"><div class="form-group"><label>سمت:</label><input type="text" id="stf-role-title" required></div><div class="form-group"><label>شماره پرسنلی:</label><input type="text" id="stf-personnel-no" placeholder="SRJ-1005"></div></div>
+    <div class="grid-2"><div class="form-group"><label>پروژه:</label><select id="stf-project"></select></div><div class="form-group"><label>شروع چرخه کاری:</label><input type="date" id="stf-cycle-start"></div></div>
+    <div class="form-group"><label>تصویر پروفایل:</label><input type="file" id="stf-photo-file" accept="image/*" onchange="previewStaffPhoto(event)"><div style="margin-top:6px"><img id="stf-photo-preview" alt="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;display:none;border:2px solid var(--accent)"></div></div>
+    <button type="submit" class="btn btn-gold btn-block">💾 ذخیره پرسنل</button></form></div></div>
+
+<div id="modal-project" class="modal-overlay"><div class="modal-content">
+  <div class="modal-header"><h3 id="project-modal-title">پروژه</h3><button class="close-modal-btn" onclick="closeModal('modal-project')">×</button></div>
+  <form onsubmit="handleSaveProject(event)"><input type="hidden" id="prj-edit-code">
+    <div class="grid-2"><div class="form-group"><label>کد یکتا (انگلیسی):</label><input type="text" id="prj-code" required autocapitalize="none"></div><div class="form-group"><label>نام پروژه:</label><input type="text" id="prj-name" required></div></div>
+    <div class="grid-3"><div class="form-group"><label>شعاع ژئوفنس (متر):</label><input type="number" min="0" id="prj-radius" value="250"></div><div class="form-group"><label>عرض جغرافیایی:</label><input type="text" id="prj-lat" inputmode="decimal"></div><div class="form-group"><label>طول جغرافیایی:</label><input type="text" id="prj-lng" inputmode="decimal"></div></div>
+    <button type="button" class="btn btn-sm btn-outline" style="margin-bottom:10px" onclick="useMyLocation()">📍 استفاده از موقعیت فعلی من</button>
+    <div class="grid-2"><div class="form-group"><label>روزهای کاری:</label><input type="number" min="1" id="prj-work-days" value="30" required></div><div class="form-group"><label>روزهای استراحت:</label><input type="number" min="1" id="prj-rest-days" value="10" required></div></div>
+    <button type="submit" class="btn btn-gold btn-block">💾 ذخیره پروژه</button></form></div></div>
+
+<div id="modal-admin" class="modal-overlay"><div class="modal-content">
+  <div class="modal-header"><h3 id="admin-modal-title">مدیر</h3><button class="close-modal-btn" onclick="closeModal('modal-admin')">×</button></div>
+  <form onsubmit="handleSaveAdmin(event)"><input type="hidden" id="adm-edit-username">
+    <div class="form-group"><label>نام کامل:</label><input type="text" id="adm-name" required></div>
+    <div class="form-group"><label>یوزرنیم:</label><input type="text" id="adm-username" required autocapitalize="none"></div>
+    <div class="form-group"><label>رمز عبور:</label><input type="text" id="adm-password" required></div>
+    <button type="submit" class="btn btn-gold btn-block">💾 ذخیره</button></form></div></div>
+
+<div id="modal-reject" class="modal-overlay"><div class="modal-content" style="max-width:420px">
+  <div class="modal-header"><h3>رد شیفت</h3><button class="close-modal-btn" onclick="closeModal('modal-reject')">×</button></div>
+  <input type="hidden" id="rej-id"><div class="form-group"><label>علت رد (برای پرسنل نمایش داده می‌شود):</label><textarea id="rej-reason" rows="3"></textarea></div>
+  <button class="btn btn-danger btn-block" onclick="confirmReject()">ثبت رد</button></div></div>
+
+<div id="modal-doc" class="modal-overlay"><div class="modal-content wide">
+  <div class="modal-header"><h3 id="doc-modal-title">مشاهده</h3><button class="close-modal-btn" onclick="closeModal('modal-doc')">×</button></div>
+  <div class="paper" id="doc-paper"></div>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn btn-outline" onclick="printCurrentDoc()">🖨️ چاپ / ذخیره PDF</button><button class="btn btn-outline" id="doc-reply-btn" onclick="replyToCurrentDoc()" style="display:none">↩️ پاسخ</button></div></div></div>
+
+<div id="print-area"></div>
+<script>
+/* =====================================================================
+   SRJ CORE — هسته مشترک داشبورد مدیریت، اپ پرسنل و ویجت
+   ذخیره‌سازی: یک فایل JSON روی گیت‌هاب (Contents API)
+   قاعده طلایی: هر تغییر «روی تازه‌ترین نسخه گیت‌هاب» اعمال می‌شود (updateDb)،
+   نه روی نسخه قدیمی حافظه؛ بنابراین ثبت‌های هم‌زمان مدیر و پرسنل هم‌دیگر را پاک نمی‌کنند.
+===================================================================== */
+const GH_CFG_KEY = 'srj_gh_config_v1';
+
+function esc(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toEn(s) {
+    return String(s === undefined || s === null ? '' : s)
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+function normUser(s) { return toEn(s).trim().toLowerCase(); }
+function normPass(s) { return toEn(s).trim(); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function ghConfig() { try { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch (e) { return null; } }
+function saveGhConfig(cfg) { localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg)); }
+function clearGhConfig() { localStorage.removeItem(GH_CFG_KEY); }
+
+function b64EncodeUtf8(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+}
+function b64DecodeUtf8(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+}
+
+/* ---------- تاریخ و ساعت (همیشه با ارقام لاتین تا فیلتر و مقایسه خراب نشود) ---------- */
+function jalaliParts(d) {
+    const f = new Intl.DateTimeFormat('en-u-ca-persian-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const p = {};
+    f.formatToParts(d || new Date()).forEach(x => { p[x.type] = x.value; });
+    return p;
+}
+function todayJ(d) { const p = jalaliParts(d); return `${p.year}/${p.month}/${p.day}`; }
+function monthJ(d) { const p = jalaliParts(d); return `${p.year}/${p.month}`; }
+function yearJ(d) { return jalaliParts(d).year; }
+function nowHM(d) { return (d || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
+function isJDate(s) { return /^\d{4}\/\d{2}\/\d{2}$/.test(toEn(s).trim()); }
+function fixJDate(s) {
+    // 1405/7/6 -> 1405/07/06
+    const m = toEn(s).trim().match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+    if (!m) return null;
+    return `${m[1]}/${m[2].padStart(2, '0')}/${m[3].padStart(2, '0')}`;
+}
+function sameLocalDay(ts, d) {
+    if (!ts) return false;
+    const a = new Date(ts), b = d || new Date();
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function hoursBetween(l) {
+    // ساعت کارکرد یک رکورد (بر اساس مُهر زمانی؛ در نبود آن بر اساس ساعت‌های متنی)
+    if (!l || !l.start || !l.end) return 0;
+    if (l.startTs && l.endTs) {
+        const h = (new Date(l.endTs) - new Date(l.startTs)) / 3600000;
+        if (isFinite(h) && h >= 0) return Math.round(h * 100) / 100;
+    }
+    const a = toEn(l.start).match(/(\d{1,2}):(\d{2})/), b = toEn(l.end).match(/(\d{1,2}):(\d{2})/);
+    if (!a || !b) return 0;
+    let m = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]);
+    if (m < 0) m += 1440;
+    return Math.round(m / 60 * 100) / 100;
+}
+function fmtHours(h) {
+    h = Number(h) || 0;
+    const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    return `${hh}:${String(mm).padStart(2, '0')}`;
+}
+function haversineM(a, b) {
+    const R = 6371000, r = x => x * Math.PI / 180;
+    const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return Math.round(2 * R * Math.asin(Math.sqrt(s)));
+}
+
+/* ---------- ساختار پایگاه داده ---------- */
+function normalizeDb(d) {
+    d = (d && typeof d === 'object') ? d : {};
+    ['admins', 'users', 'projects', 'worklogs', 'ot', 'leaves', 'payslips', 'mail', 'audit'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+    if (!d.settings || typeof d.settings !== 'object') d.settings = {};
+    d.settings.letterhead = Object.assign({
+        company: 'شرکت ثابت ره جویان جهان زمین', latin: 'SRJ Group', tagline: 'Mineral Exploration & Extraction',
+        address: '', phone: '', email: '', website: ''
+    }, d.settings.letterhead || {});
+    if (!d.settings.counters || typeof d.settings.counters !== 'object') d.settings.counters = {};
+    if (!d.settings.counters.letter) d.settings.counters.letter = 0;
+    return d;
+}
+function emptyData() {
+    return normalizeDb({
+        admins: [{ username: 'admin', password: 'admin123', name: 'مدیر سیستم' }],
+        projects: [
+            { code: 'afg-camp', name: 'کمپ معدنی افغانستان', radius: 250, workDays: 30, restDays: 10 },
+            { code: 'sarcheshmeh', name: 'معدن سرچشمه', radius: 350, workDays: 22, restDays: 8 }
+        ]
+    });
+}
+
+/* ---------- ارتباط با گیت‌هاب ---------- */
+let DB = null, DB_SHA = null, DB_ETAG = null;
+let onConn = function () {};        // (state: 'ok'|'syncing'|'error', msg)
+let onDbApplied = function () {};   // بعد از هر ذخیره موفق
+
+function netErr(e) { const err = new Error('عدم اتصال به اینترنت یا گیت‌هاب'); err.network = true; err.cause = e; return err; }
+
+async function ghRequest(url, opts) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
+    try { return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal, cache: 'no-store' })); }
+    catch (e) { throw netErr(e); }
+    finally { clearTimeout(timer); }
+}
+function ghHeaders(extra) {
+    const cfg = ghConfig();
+    return Object.assign({ 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' }, extra || {});
+}
+function ghBase() { const c = ghConfig(); return `https://api.github.com/repos/${c.owner}/${c.repo}`; }
+
+async function ghHttpError(res, what) {
+    let msg = '';
+    try { msg = (await res.json()).message || ''; } catch (e) { }
+    if (res.status === 401) return new Error('توکن نامعتبر یا منقضی شده است.');
+    if (res.status === 403) {
+        if (res.headers.get('x-ratelimit-remaining') === '0' || /rate limit/i.test(msg)) return new Error('سقف درخواست گیت‌هاب پر شده؛ چند دقیقه بعد دوباره تلاش کنید.');
+        return new Error('توکن دسترسی کافی ندارد (باید Contents: Read and write داشته باشد).');
+    }
+    return new Error((what || 'خطای گیت‌هاب') + ' (کد ' + res.status + ')' + (msg ? ' — ' + msg : ''));
+}
+
+async function ghCheckRepo() {
+    const res = await ghRequest(ghBase(), { headers: ghHeaders() });
+    if (res.status === 404) throw new Error('مخزن پیدا نشد یا توکن به آن دسترسی ندارد. نام owner/repo و دسترسی توکن را بررسی کنید.');
+    if (!res.ok) throw await ghHttpError(res, 'خطا در بررسی مخزن');
+    const j = await res.json();
+    if (j.permissions && j.permissions.push === false) throw new Error('توکن فقط دسترسی خواندن دارد؛ باید Contents: Read and write بدهید.');
+    return j;
+}
+
+async function ghFetchFile(etag) {
+    const cfg = ghConfig();
+    if (!cfg) throw new Error('اتصال به گیت‌هاب تنظیم نشده است.');
+    const headers = ghHeaders(etag ? { 'If-None-Match': etag } : {});
+    const url = `${ghBase()}/contents/${encodeURI(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}` + (etag ? '' : '&_=' + Date.now());
+    const res = await ghRequest(url, { headers });
+    if (res.status === 304) return { notModified: true };
+    if (res.status === 404) return { data: emptyData(), sha: null, etag: null, isNew: true };
+    if (!res.ok) throw await ghHttpError(res, 'خطای اتصال به گیت‌هاب');
+    const json = await res.json();
+    let text;
+    if (json.content && json.encoding === 'base64') text = b64DecodeUtf8(json.content);
+    else {
+        // فایل بزرگ‌تر از ۱ مگابایت: از Blob API می‌خوانیم
+        const br = await ghRequest(`${ghBase()}/git/blobs/${json.sha}`, { headers: ghHeaders() });
+        if (!br.ok) throw await ghHttpError(br, 'خطا در خواندن فایل بزرگ');
+        text = b64DecodeUtf8((await br.json()).content);
+    }
+    let data;
+    try { data = JSON.parse(text); } catch (e) { throw new Error('فایل داده روی گیت‌هاب خراب یا نامعتبر است.'); }
+    return { data: normalizeDb(data), sha: json.sha, etag: res.headers.get('etag') };
+}
+
+async function ghSaveFile(data, sha, message) {
+    const cfg = ghConfig();
+    const body = { message: message || 'update SRJ data', content: b64EncodeUtf8(JSON.stringify(data)), branch: cfg.branch };
+    if (sha) body.sha = sha;
+    const res = await ghRequest(`${ghBase()}/contents/${encodeURI(cfg.path)}`, {
+        method: 'PUT', headers: ghHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body)
+    });
+    if (res.ok) return (await res.json()).content.sha;
+    let msg = '';
+    try { msg = (await res.clone().json()).message || ''; } catch (e) { }
+    if (res.status === 409 || (res.status === 422 && /sha/i.test(msg))) { const err = new Error('conflict'); err.conflict = true; throw err; }
+    throw await ghHttpError(res, 'خطا در ذخیره روی گیت‌هاب');
+}
+
+function applyLoaded(data, sha, etag) {
+    DB = data; DB_SHA = sha; DB_ETAG = etag || null;
+}
+
+/* بارگذاری (برای پولینگ). true = تغییر کرده، false = بدون تغییر */
+async function loadDb() {
+    onConn('syncing');
+    try {
+        const r = await ghFetchFile(DB_ETAG);
+        if (r.notModified) { onConn('ok'); return false; }
+        applyLoaded(r.data, r.sha, r.etag);
+        onConn('ok');
+        return true;
+    } catch (e) { onConn('error', e.message); throw e; }
+}
+
+/*
+  updateDb(mutator, message)
+  mutator(data) روی «تازه‌ترین» نسخه اجرا می‌شود؛
+   - برای لغو عملیات: throw new Error('پیام')  (aborted)
+   - برای «تغییری لازم نیست»: return 'noop'
+  در صورت تداخل هم‌زمان (409) خودکار دوباره از نو تلاش می‌کند.
+*/
+let _chain = Promise.resolve();
+function updateDb(mutator, message) {
+    const run = async () => {
+        onConn('syncing');
+        let lastErr = null;
+        for (let attempt = 0; attempt < 6; attempt++) {
+            let fetched;
+            try { fetched = await ghFetchFile(); }
+            catch (e) { lastErr = e; if (e.network && attempt < 2) { await sleep(700); continue; } onConn('error', e.message); throw e; }
+            const data = normalizeDb(fetched.data);
+            let verdict;
+            try { verdict = mutator(data); }
+            catch (e) { applyLoaded(data, fetched.sha, fetched.etag); onConn('ok'); const err = new Error(e.message || 'عملیات انجام نشد'); err.aborted = true; throw err; }
+            if (verdict === 'noop') { applyLoaded(data, fetched.sha, fetched.etag); onConn('ok'); return data; }
+            try {
+                const newSha = await ghSaveFile(data, fetched.sha, message);
+                applyLoaded(data, newSha, null);
+                onConn('ok');
+                try { onDbApplied(); } catch (e) { }
+                return data;
+            } catch (e) {
+                lastErr = e;
+                if (e.conflict) { await sleep(150 + Math.random() * 350 * (attempt + 1)); continue; }
+                if (e.network && attempt < 2) { await sleep(700); continue; }
+                onConn('error', e.message);
+                throw e;
+            }
+        }
+        const err = lastErr || new Error('تداخل مکرر در ذخیره‌سازی؛ دوباره تلاش کنید.');
+        onConn('error', err.message);
+        throw err;
+    };
+    const p = _chain.then(run);
+    _chain = p.catch(() => { });
+    return p;
+}
+
+/* ---------- تنظیمات اولیه اتصال (مشترک) ---------- */
+async function connectAndPrepare(cfg) {
+    saveGhConfig(cfg);
+    try {
+        await ghCheckRepo();
+        const r = await ghFetchFile();
+        applyLoaded(r.data, r.sha, r.etag);
+        if (r.isNew) await updateDb(() => { }, 'راه‌اندازی اولیه پایگاه داده SRJ');
+    } catch (e) { clearGhConfig(); throw e; }
+}
+
+/* ---------- وضعیت چرخه کاری ---------- */
+function cycleInfo(user, projects) {
+    const proj = (projects || []).find(p => p.code === user.project);
+    if (!proj || !user.cycleStart) return { state: 'none', text: 'تعریف‌نشده' };
+    const start = new Date(user.cycleStart + 'T00:00:00');
+    const diff = Math.floor((new Date() - start) / 86400000);
+    if (diff < 0) return { state: 'none', text: 'هنوز شروع نشده' };
+    const wd = +proj.workDays || 1, rd = +proj.restDays || 1;
+    const pos = diff % (wd + rd);
+    if (pos < wd) return { state: 'work', text: `روز ${pos + 1} کار (از ${wd})` };
+    return { state: 'rest', text: `روز ${pos - wd + 1} استراحت (از ${rd})` };
+}
+
+/* =====================================================================
+   SRJ CORE EXTRA — سربرگ رسمی، فیش، نامه، چاپ/PDF و اکسل استایل‌دار
+===================================================================== */
+const LOGO_DATA = "data:image/png;base64,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";
+function applyLogos() { document.querySelectorAll('img[data-logo]').forEach(i => { i.src = LOGO_DATA; }); }
+
+/* ---------- اعلان کوچک (toast) ---------- */
+function toast(msg, kind) {
+    let t = document.getElementById('toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+    const el = document.createElement('div');
+    el.className = 'toast-item ' + (kind || 'ok');
+    el.textContent = msg;
+    t.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; }, (kind === 'err' ? 5200 : 3200));
+    setTimeout(() => { el.remove(); }, (kind === 'err' ? 5800 : 3800));
+}
+
+function money(n) { return Math.round(Number(n) || 0).toLocaleString('fa-IR'); }
+function lhSettings() { return (DB && DB.settings && DB.settings.letterhead) || normalizeDb({}).settings.letterhead; }
+function projectNameOf(code) { const p = ((DB && DB.projects) || []).find(x => x.code === code); return p ? p.name : (code || '-'); }
+
+/* ---------- سربرگ رسمی SRJ (هدر و فوتر در هر صفحه چاپ تکرار می‌شود) ---------- */
+function letterheadDoc(o) {
+    const s = lhSettings();
+    const foot = [s.address, s.phone ? 'تلفن: ' + s.phone : '', s.email, s.website].filter(Boolean).join('   |   ');
+    return `
+    <table class="lh-doc"><thead><tr><td>
+        <div class="lh-head">
+            <div class="lh-brand"><img src="${LOGO_DATA}" alt="SRJ">
+                <div><div class="lh-co">${esc(s.company)}</div><div class="lh-co-en">${esc(s.latin)} — ${esc(s.tagline)}</div></div>
+            </div>
+            <div class="lh-meta">
+                ${o.refNo ? `<div>شماره: <b>${esc(o.refNo)}</b></div>` : ''}
+                <div>تاریخ: <b>${esc(o.date || todayJ())}</b></div>
+                ${o.attach !== undefined ? `<div>پیوست: <b>${esc(o.attach)}</b></div>` : ''}
+            </div>
+        </div><div class="lh-bar"></div>
+    </td></tr></thead>
+    <tbody><tr><td class="lh-body">${o.title ? `<h2 class="lh-title">${esc(o.title)}</h2>` : ''}${o.body}</td></tr></tbody>
+    <tfoot><tr><td><div class="lh-foot">${foot ? esc(foot) : '&nbsp;'}</div></td></tr></tfoot></table>`;
+}
+
+function kvGrid(pairs) {
+    return `<div class="lh-kv">${pairs.map(p => `<div><b>${esc(p[0])}:</b> ${esc(p[1])}</div>`).join('')}</div>`;
+}
+
+function letterDoc(m) {
+    const toLabel = m.dir === 'toAdmin' ? 'مدیریت شرکت' : (m.toLabel || 'پرسنل');
+    const fromLabel = m.dir === 'toAdmin' ? (m.fromName || m.fromUser) + (m.fromPersonnelNo ? ' (' + m.fromPersonnelNo + ')' : '') : (m.fromName || 'مدیریت');
+    const body = kvGrid([['گیرنده', toLabel], ['فرستنده', fromLabel], ['موضوع', m.subject || '-'], ['زمان ثبت', (m.date || '') + ' ' + (m.time || '')]]) +
+        `<div class="lh-msg">${esc(m.body)}</div>
+         <div class="lh-sign"><span>با احترام<br><b>${esc(m.fromName || '')}</b></span><span>مهر / امضا</span></div>`;
+    return letterheadDoc({ refNo: m.ref, date: m.date, attach: 'ندارد', body });
+}
+
+function payslipDoc(s, user) {
+    const has = s.base !== undefined;
+    let table = '';
+    if (has) {
+        const earn = [['حقوق پایه', s.base], ['حق مسکن', s.housing], ['پاداش / مزایای فیلد', s.bonus], [`اضافه‌کار (${s.otHours || 0} ساعت × ${money(s.otRate || 0)})`, s.otPay]];
+        const ded = [['بیمه', s.ins], ['مالیات', s.tax]];
+        table = `<table class="lh-table"><thead><tr><th style="width:70%">شرح مزایا</th><th>مبلغ (تومان)</th></tr></thead><tbody>
+            ${earn.map(r => `<tr><td style="text-align:right">${esc(r[0])}</td><td>${money(r[1])}</td></tr>`).join('')}
+            <tr><td style="text-align:right"><b>جمع مزایا (ناخالص)</b></td><td><b>${money(s.gross)}</b></td></tr></tbody>
+            <thead><tr><th>شرح کسورات</th><th>مبلغ (تومان)</th></tr></thead><tbody>
+            ${ded.map(r => `<tr><td style="text-align:right">${esc(r[0])}</td><td>${money(r[1])}</td></tr>`).join('')}
+            <tr><td style="text-align:right"><b>جمع کسورات</b></td><td><b>${money(s.deductions)}</b></td></tr></tbody></table>`;
+    } else {
+        table = `<table class="lh-table"><thead><tr><th>ناخالص</th><th>کسورات</th></tr></thead><tbody><tr><td>${money(s.gross)}</td><td>${money(s.deductions)}</td></tr></tbody></table>`;
+    }
+    const body = kvGrid([
+        ['نام و نام خانوادگی', s.name || (user && user.name) || '-'], ['شماره پرسنلی', s.personnelNo || (user && user.personnelNo) || '-'],
+        ['سمت', (user && user.roleTitle) || '-'], ['دوره', s.month || '-'],
+        ['روزهای کارکرد', s.workDays !== undefined ? s.workDays : '-'], ['تاریخ صدور', s.issueDate || '-']
+    ]) + table +
+        `<div class="lh-net">خالص قابل پرداخت: <b>${money(s.net)} تومان</b></div>
+         <div class="lh-sign"><span>امضای پرسنل</span><span>مسئول امور مالی</span><span>مهر شرکت</span></div>`;
+    return letterheadDoc({ refNo: s.ref || ('PAY-' + String(s.id).slice(-6)), date: s.issueDate, title: 'فیش حقوقی ' + (s.month || ''), body });
+}
+
+function attendanceDoc(o) {
+    // o: {name, personnelNo, roleTitle, monthLabel, rows:[{date,project,start,end,hours,status,ot,desc}], totals:{days,hours,ot}}
+    const body = kvGrid([['نام و نام خانوادگی', o.name], ['شماره پرسنلی', o.personnelNo || '-'], ['سمت', o.roleTitle || '-'], ['دوره گزارش', o.monthLabel]]) +
+        `<table class="lh-table"><thead><tr><th>ردیف</th><th>تاریخ</th><th>پروژه</th><th>ورود</th><th>خروج</th><th>مدت</th><th>وضعیت</th><th>اضافه‌کار</th><th>شرح گزارش</th></tr></thead><tbody>
+        ${o.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.date)}</td><td>${esc(r.project)}</td><td>${esc(r.start)}</td><td>${esc(r.end)}</td><td>${esc(r.hoursText)}</td><td>${esc(r.status)}</td><td>${esc(r.ot)}</td><td style="text-align:right">${esc(r.desc)}</td></tr>`).join('') || '<tr><td colspan="9">رکوردی در این دوره ثبت نشده است.</td></tr>'}
+        </tbody></table>
+        <div class="lh-kv"><div><b>روزهای حضور:</b> ${esc(o.totals.days)}</div><div><b>جمع ساعات کارکرد:</b> ${esc(o.totals.hoursText)}</div><div><b>اضافه‌کار ثبت‌شده:</b> ${esc(o.totals.ot)} ساعت</div><div><b>تاریخ صدور گزارش:</b> ${esc(todayJ())}</div></div>
+        <div class="lh-sign"><span>امضای پرسنل</span><span>مدیر پروژه</span><span>مهر شرکت</span></div>`;
+    return letterheadDoc({ date: todayJ(), title: 'گزارش رسمی کارکرد ماهانه', body });
+}
+
+function printDoc(html) {
+    let a = document.getElementById('print-area');
+    if (!a) { a = document.createElement('div'); a.id = 'print-area'; document.body.appendChild(a); }
+    a.innerHTML = html;
+    const cleanup = () => { a.innerHTML = ''; window.removeEventListener('afterprint', cleanup); };
+    window.addEventListener('afterprint', cleanup);
+    setTimeout(() => window.print(), 120);
+}
+
+function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+/* ---------- اکسل استایل‌دار با سربرگ SRJ (ExcelJS) ---------- */
+function _argb(hex) { return 'FF' + hex.replace('#', '').toUpperCase(); }
+const _xlBorder = { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } };
+
+function addStyledSheet(wb, sh) {
+    const s = lhSettings();
+    const cols = sh.columns, n = cols.length;
+    const HEAD_ROW = 8;
+    const ws = wb.addWorksheet(String(sh.name).replace(/[\\\/\?\*\[\]:]/g, ' ').slice(0, 31), {
+        views: [{ rightToLeft: true, showGridLines: false, state: 'frozen', ySplit: HEAD_ROW }],
+        pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.6, header: 0.3, footer: 0.3 } },
+        headerFooter: { oddFooter: '&C&"Tahoma"SRJ  —  صفحه &P از &N' }
+    });
+    cols.forEach((c, i) => { ws.getColumn(i + 1).width = c.width || 14; });
+    const logoCols = Math.min(2, n - 2);
+
+    // --- سربرگ ---
+    ws.mergeCells(1, 1, 4, logoCols);
+    const imgId = wb.addImage({ base64: LOGO_DATA, extension: 'png' });
+    ws.addImage(imgId, { tl: { col: 0.15, row: 0.2 }, ext: { width: 150, height: 60 } });
+    ws.mergeCells(1, logoCols + 1, 2, n);
+    const t1 = ws.getCell(1, logoCols + 1);
+    t1.value = s.company + '  —  ' + s.latin;
+    t1.font = { name: 'Tahoma', size: 16, bold: true, color: { argb: 'FF0F172A' } };
+    t1.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.mergeCells(3, logoCols + 1, 4, n);
+    const t2 = ws.getCell(3, logoCols + 1);
+    t2.value = sh.title;
+    t2.font = { name: 'Tahoma', size: 12, bold: true, color: { argb: 'FF0097CC' } };
+    t2.alignment = { horizontal: 'center', vertical: 'middle' };
+    for (let r = 1; r <= 4; r++) ws.getRow(r).height = 18;
+
+    ws.mergeCells(5, 1, 5, n);
+    ws.getCell(5, 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0097CC' } };
+    ws.getRow(5).height = 5;
+
+    ws.mergeCells(6, 1, 6, n);
+    const info = ws.getCell(6, 1);
+    info.value = sh.infoLine || '';
+    info.font = { name: 'Tahoma', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+    info.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+    info.alignment = { horizontal: 'right', vertical: 'middle', readingOrder: 'rtl', indent: 1 };
+    ws.getRow(6).height = 24;
+    ws.getRow(7).height = 6;
+
+    // --- سطر عنوان ستون‌ها ---
+    const hr = ws.getRow(HEAD_ROW);
+    cols.forEach((c, i) => {
+        const cell = hr.getCell(i + 1);
+        cell.value = c.header;
+        cell.font = { name: 'Tahoma', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true, readingOrder: 'rtl' };
+        cell.border = _xlBorder;
+    });
+    hr.height = 26;
+
+    // --- داده‌ها ---
+    (sh.rows || []).forEach((row, ri) => {
+        const r = ws.getRow(HEAD_ROW + 1 + ri);
+        let lines = 1;
+        cols.forEach((c, i) => {
+            const cell = r.getCell(i + 1);
+            let v = row[c.key];
+            if (v === undefined || v === null) v = '';
+            cell.value = (c.type === 'number' && v !== '') ? Number(v) : v;
+            if (c.type === 'number' && c.fmt) cell.numFmt = c.fmt;
+            cell.font = { name: 'Tahoma', size: 10, color: { argb: 'FF0F172A' } };
+            cell.alignment = { horizontal: c.align || 'center', vertical: 'middle', wrapText: !!c.wrap, readingOrder: 'rtl' };
+            cell.border = _xlBorder;
+            if (ri % 2 === 1) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            if (c.color) {
+                const col = c.color(row);
+                if (col) { cell.font = { name: 'Tahoma', size: 10, bold: true, color: { argb: _argb(col.font) } }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: _argb(col.bg) } }; }
+            }
+            if (c.wrap && typeof v === 'string') lines = Math.max(lines, Math.ceil(v.length / ((c.width || 14) * 1.05)));
+        });
+        r.height = Math.max(20, 15 * lines);
+    });
+
+    let last = HEAD_ROW + (sh.rows || []).length;
+    if (!(sh.rows || []).length) {
+        last++; ws.mergeCells(last, 1, last, n);
+        const e = ws.getCell(last, 1); e.value = 'رکوردی برای این دوره ثبت نشده است.';
+        e.alignment = { horizontal: 'center' }; e.font = { name: 'Tahoma', size: 10, color: { argb: 'FF64748B' } }; e.border = _xlBorder;
+    }
+
+    // --- سطر جمع ---
+    if (sh.totals) {
+        last++;
+        const r = ws.getRow(last);
+        cols.forEach((c, i) => {
+            const cell = r.getCell(i + 1);
+            const v = sh.totals[c.key];
+            cell.value = (v === undefined) ? '' : v;
+            if (c.type === 'number' && c.fmt && v !== undefined && v !== '') cell.numFmt = c.fmt;
+            cell.font = { name: 'Tahoma', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F4FB' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', readingOrder: 'rtl' };
+            cell.border = _xlBorder;
+        });
+        r.height = 24;
+    }
+
+    // --- یادداشت‌ها و امضا ---
+    last += 2;
+    (sh.notes || []).forEach(t => {
+        ws.mergeCells(last, 1, last, n);
+        const c = ws.getCell(last, 1); c.value = t;
+        c.font = { name: 'Tahoma', size: 9, italic: true, color: { argb: 'FF64748B' } };
+        c.alignment = { horizontal: 'right', readingOrder: 'rtl', wrapText: true };
+        last++;
+    });
+    last += 1;
+    const half = Math.max(1, Math.floor(n / 2));
+    ws.mergeCells(last, 1, last, half);
+    ws.mergeCells(last, half + 1, last, n);
+    const sg1 = ws.getCell(last, 1), sg2 = ws.getCell(last, half + 1);
+    sg1.value = 'مهر و امضای مدیر پروژه'; sg2.value = 'مهر و امضای مدیریت SRJ';
+    [sg1, sg2].forEach(c => { c.font = { name: 'Tahoma', size: 10, bold: true }; c.alignment = { horizontal: 'center', readingOrder: 'rtl' }; });
+    ws.getRow(last).height = 40;
+    ws.getRow(last).alignment = { vertical: 'top' };
+    ws.getCell(last + 1, 1).value = [s.address, s.phone, s.email, s.website].filter(Boolean).join('   |   ');
+    ws.mergeCells(last + 1, 1, last + 1, n);
+    ws.getCell(last + 1, 1).font = { name: 'Tahoma', size: 8, color: { argb: 'FF64748B' } };
+    ws.getCell(last + 1, 1).alignment = { horizontal: 'center' };
+    ws.pageSetup.printTitlesRow = `${HEAD_ROW}:${HEAD_ROW}`;
+    return ws;
+}
+
+async function buildStyledWorkbook(sheets) {
+    if (typeof ExcelJS === 'undefined') throw new Error('کتابخانه اکسل بارگذاری نشده است (اینترنت را بررسی کنید).');
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'SRJ'; wb.company = lhSettings().company; wb.created = new Date();
+    sheets.forEach(sh => addStyledSheet(wb, sh));
+    return wb;
+}
+
+async function exportStyledXlsx(fileName, sheets) {
+    const wb = await buildStyledWorkbook(sheets);
+    const buf = await wb.xlsx.writeBuffer();
+    downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
+}
+
+/* رنگ‌بندی وضعیت تایید برای ستون اکسل */
+function approvalColor(row) {
+    if (row.statusKey === 'approved') return { font: '166534', bg: 'DCFCE7' };
+    if (row.statusKey === 'rejected') return { font: '991B1B', bg: 'FEE2E2' };
+    return { font: '92400E', bg: 'FEF3C7' };
+}
+function approvalLabel(a) { return a === 'approved' ? 'تایید مدیر' : (a === 'rejected' ? 'رد شد' : 'در انتظار تایید'); }
+
+/* =====================================================================
+   داشبورد مدیریت
+===================================================================== */
+const SESSION_KEY = 'srj_admin_session_v2';
+const POLL_MS = 20000;
+let currentAdmin = null, pollTimer = null, CUR_TAB = 'live', MAIL_TAB = 'inbox', CUR_DOC = null, tempPhotoData = '';
+const newId = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
+
+onConn = function (state, msg) {
+    const el = document.getElementById('conn-status'); if (!el) return;
+    el.classList.remove('conn-ok', 'conn-syncing', 'conn-error');
+    if (state === 'ok') { el.classList.add('conn-ok'); el.textContent = '🟢 متصل | ' + nowHM(); }
+    else if (state === 'syncing') { el.classList.add('conn-syncing'); el.textContent = '🟡 در حال همگام‌سازی...'; }
+    else { el.classList.add('conn-error'); el.textContent = '🔴 خطا: ' + (msg || ''); }
+};
+onDbApplied = function () { if (currentAdmin) renderAllTabs(); };
+
+/* اجرای تغییر روی تازه‌ترین نسخه گیت‌هاب + پیام خطا/موفقیت */
+async function mutate(fn, msg, okMsg) {
+    try { await updateDb(fn, msg); if (okMsg) toast(okMsg, 'ok'); renderAllTabs(); return true; }
+    catch (e) { toast(e.message, 'err'); renderAllTabs(); return false; }
+}
+function audit(data, action, detail) {
+    data.audit.unshift({ id: 'au-' + newId(), ts: new Date().toISOString(), date: todayJ(), time: nowHM(), user: currentAdmin ? currentAdmin.username : '', name: currentAdmin ? currentAdmin.name : '', action, detail });
+    if (data.audit.length > 400) data.audit.length = 400;
+}
+
+/* ---------------- بوت / ورود ---------------- */
+function showScreen(n) {
+    document.getElementById('screen-setup').style.display = n === 'setup' ? 'flex' : 'none';
+    document.getElementById('screen-login').style.display = n === 'login' ? 'flex' : 'none';
+    document.getElementById('admin-app').style.display = n === 'app' ? 'block' : 'none';
+}
+async function boot() {
+    applyLogos();
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
+    if (!ghConfig()) { showScreen('setup'); return; }
+    try { await loadDb(); }
+    catch (e) { const b = document.getElementById('setup-error'); b.style.display = 'block'; b.textContent = e.message; showScreen('setup'); return; }
+    const sess = sessionStorage.getItem(SESSION_KEY);
+    const found = sess ? DB.admins.find(a => normUser(a.username) === normUser(sess)) : null;
+    if (found) { currentAdmin = found; enterApp(); } else showScreen('login');
+}
+window.onload = boot;
+async function handleSetupSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('setup-submit-btn'), err = document.getElementById('setup-error');
+    err.style.display = 'none'; btn.disabled = true; btn.textContent = 'در حال بررسی اتصال...';
+    const cfg = { owner: document.getElementById('cfg-owner').value.trim(), repo: document.getElementById('cfg-repo').value.trim(), branch: document.getElementById('cfg-branch').value.trim() || 'main', path: document.getElementById('cfg-path').value.trim() || 'data/db.json', token: document.getElementById('cfg-token').value.trim() };
+    try { await connectAndPrepare(cfg); showScreen('login'); }
+    catch (ex) { err.style.display = 'block'; err.textContent = ex.message; }
+    finally { btn.disabled = false; btn.textContent = '🔗 اتصال و شروع'; }
+}
+function resetGithubConfig() { if (!confirm('تنظیمات اتصال فعلی پاک شود؟')) return; clearGhConfig(); sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const u = normUser(document.getElementById('lg-username').value), p = normPass(document.getElementById('lg-password').value), box = document.getElementById('login-error');
+    try { await loadDb(); } catch (er) { box.style.display = 'block'; box.textContent = 'خطا در اتصال: ' + er.message; return; }
+    const f = DB.admins.find(a => normUser(a.username) === u && normPass(a.password) === p);
+    if (!f) { box.style.display = 'block'; box.textContent = 'نام کاربری یا رمز عبور اشتباه است.'; return; }
+    box.style.display = 'none'; currentAdmin = f; sessionStorage.setItem(SESSION_KEY, f.username); enterApp();
+}
+function logoutAdmin() { sessionStorage.removeItem(SESSION_KEY); clearInterval(pollTimer); location.reload(); }
+function enterApp() {
+    showScreen('app'); document.getElementById('sf-admin-name').textContent = currentAdmin.name;
+    document.getElementById('pr-admin-month').value = monthJ(); document.getElementById('rep-month').value = monthJ();
+    renderAllTabs(); clearInterval(pollTimer); pollTimer = setInterval(() => pollNow(), POLL_MS);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollNow(); });
+    setInterval(() => { if (CUR_TAB === 'live') renderLiveMonitor(); }, 60000);
+}
+async function pollNow() {
+    if (!currentAdmin || document.visibilityState === 'hidden') return;
+    try {
+        if (await loadDb()) {
+            const me = DB.admins.find(a => normUser(a.username) === normUser(currentAdmin.username));
+            if (!me) { toast('حساب شما حذف شده است.', 'err'); setTimeout(logoutAdmin, 1500); return; }
+            currentAdmin = me;
+            if (!document.querySelector('.modal-overlay[style*="flex"]')) renderAllTabs();
+        }
+    } catch (e) { }
+}
+async function manualSync() { try { await loadDb(); renderAllTabs(); toast('همگام‌سازی شد.', 'ok'); } catch (e) { toast(e.message, 'err'); } }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+/* ---------------- ناوبری ---------------- */
+const TITLES = {
+    live: ['📡 مانیتورینگ زنده', 'وضعیت لحظه‌ای حضور، ورود و خروج پرسنل'], approvals: ['✅ کارتابل تاییدات تردد', 'تایید یا رد شیفت‌های ثبت‌شده'],
+    'home-ot': ['🌙 تایید اضافه‌کار', 'اضافه‌کار دورکاری منزل/کمپ'], leaves: ['🏖️ مرخصی و مأموریت', 'درخواست‌های پرسنل'],
+    mail: ['✉️ نامه‌ها و پیام‌ها', 'ارتباط رسمی با پرسنل با سربرگ SRJ'], payroll: ['💰 حقوق و فیش', 'محاسبه و صدور فیش حقوقی'],
+    reports: ['📥 گزارش و اکسل کارکرد', 'خروجی سربرگ‌دار اکسل و PDF'], users: ['👥 مدیریت پرسنل', 'افزودن، ویرایش و حذف'],
+    projects: ['📍 پروژه‌ها و چرخه کاری', 'ژئوفنس و الگوی کار/استراحت'], settings: ['⚙️ تنظیمات سیستم', 'سربرگ، اتصال، مدیران و گزارش تغییرات']
+};
+function switchAdminTab(key, el) {
+    CUR_TAB = key;
+    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.toggle('active', l.dataset.tab === key));
+    document.getElementById('tab-headline').textContent = TITLES[key][0]; document.getElementById('tab-subheadline').textContent = TITLES[key][1];
+    Object.keys(TITLES).forEach(k => { document.getElementById('tab-' + k).style.display = k === key ? 'block' : 'none'; });
+    document.getElementById('sidebar').classList.remove('open');
+    renderAllTabs();
+}
+function renderAllTabs() {
+    if (!DB || !currentAdmin) return;
+    updateKPIs(); fillDropdowns();
+    ({ live: renderLiveMonitor, approvals: renderApprovals, 'home-ot': renderHomeOvertime, leaves: renderLeaves, mail: renderMail, payroll: () => { renderAdminPayslips(); }, reports: renderCompanySheet, users: renderAdminUsers, projects: renderProjects, settings: renderSettings }[CUR_TAB] || (() => { }))();
+}
+function updateKPIs() {
+    const open = DB.worklogs.filter(l => l.start && !l.end).length, pend = DB.worklogs.filter(l => l.approval === 'pending' && l.end).length;
+    const ot = DB.ot.filter(o => (o.status || '').includes('انتظار')).length, lv = DB.leaves.filter(l => (l.status || '').includes('انتظار')).length;
+    const mail = DB.mail.filter(m => m.dir === 'toAdmin' && !(m.readBy || []).includes('admin')).length;
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    set('kpi-present-count', open); set('kpi-pending-punches', pend); set('kpi-pending-ot', ot); set('kpi-leave-count', lv);
+    set('sb-pending-count', pend); set('sb-ot-count', ot); set('sb-leaves-count', lv); set('sb-mail-count', mail);
+}
+const userOf = un => DB.users.find(u => normUser(u.username) === normUser(un)) || { name: un, roleTitle: '', username: un };
+const avatarOf = u => u.photo ? `<img class="avatar" src="${esc(u.photo)}" alt="">` : `<span class="avatar">${esc((u.name || '?').charAt(0))}</span>`;
+function fillDropdowns() {
+    const users = DB.users;
+    const fill = (id, html, keep) => { const s = document.getElementById(id); if (!s) return; const p = s.value; s.innerHTML = html; if (keep && [...s.options].some(o => o.value === p)) s.value = p; };
+    fill('pr-admin-employee', users.map(u => `<option value="${esc(u.username)}">${esc(u.name)}</option>`).join(''), true);
+    fill('rep-user', '<option value="">همه پرسنل</option>' + users.map(u => `<option value="${esc(u.username)}">${esc(u.name)}</option>`).join(''), true);
+    fill('stf-project', DB.projects.map(p => `<option value="${esc(p.code)}">${esc(p.name)}</option>`).join(''), true);
+}
+
+/* ---------------- مانیتورینگ زنده ---------------- */
+function geoBadge(l) {
+    const g = l.geoIn; if (!g) return '<span style="color:#94a3b8">—</span>';
+    const p = DB.projects.find(x => x.code === l.project);
+    const link = `<a href="https://maps.google.com/?q=${g.lat},${g.lng}" target="_blank" rel="noopener" style="color:var(--accent)">نقشه</a>`;
+    if (p && p.lat != null && p.lng != null && p.lat !== '' && p.radius) {
+        const d = haversineM(g, { lat: +p.lat, lng: +p.lng });
+        return d > +p.radius ? `<span class="badge badge-danger">خارج محدوده (${d} م)</span> ${link}` : `<span class="badge badge-success">در محدوده (${d} م)</span> ${link}`;
+    }
+    return link;
+}
+function renderLiveMonitor() {
+    const q = (document.getElementById('live-search').value || '').trim().toLowerCase(), f = document.getElementById('live-filter').value, t = todayJ();
+    let logs = DB.worklogs.slice().sort((a, b) => (b.startTs || toEn(b.date)).localeCompare(a.startTs || toEn(a.date)));
+    if (f === 'open') logs = logs.filter(l => l.start && !l.end); else if (f === 'today') logs = logs.filter(l => (l.start && !l.end) || toEn(l.date) === t);
+    if (q) logs = logs.filter(l => (l.name || '').toLowerCase().includes(q));
+    const tb = document.getElementById('live-monitor-tbody');
+    tb.innerHTML = logs.map(l => {
+        const u = userOf(l.user), stale = l.start && !l.end && toEn(l.date) !== t, cy = cycleInfo(u, DB.projects);
+        const cyH = cy.state === 'none' ? '<span style="color:#94a3b8">—</span>' : `<span class="badge ${cy.state === 'work' ? 'badge-success' : 'badge-warning'}">${esc(cy.text)}</span>`;
+        const dur = l.end ? fmtHours(hoursBetween(l)) : (l.startTs ? fmtHours((Date.now() - new Date(l.startTs)) / 3600000) + ' (تا الان)' : '—');
+        return `<tr><td style="text-align:right">${avatarOf(u)} <b>${esc(l.name)}</b></td><td>${esc(u.roleTitle)}</td><td>${esc(projectNameOf(l.project))}</td><td>${esc(toEn(l.date))}</td>
+        <td style="color:var(--success);direction:ltr;font-weight:800">${esc(toEn(l.start)) || '—'}</td><td style="color:var(--danger);direction:ltr">${l.end ? esc(toEn(l.end)) : '—'}</td><td>${dur}</td><td>${cyH}</td><td>${geoBadge(l)}</td>
+        <td>${l.end ? '<span class="badge badge-info">پایان شیفت</span>' : (stale ? '<span class="badge badge-danger">باز مانده از قبل</span>' : '<span class="badge badge-success">در کارگاه</span>')}</td></tr>`;
+    }).join('') || '<tr><td colspan="10" style="padding:16px;color:#64748b">رکوردی نیست.</td></tr>';
+}
+
+/* ---------------- تاییدات ---------------- */
+function renderApprovals() {
+    const rows = DB.worklogs.filter(l => l.approval === 'pending').sort((a, b) => (b.startTs || toEn(b.date)).localeCompare(a.startTs || toEn(a.date)));
+    document.getElementById('approvals-tbody').innerHTML = rows.map(l => {
+        const open = l.start && !l.end;
+        return `<tr><td><b>${esc(l.name)}</b></td><td>${esc(toEn(l.date))}</td><td style="direction:ltr">${esc(toEn(l.start))}</td><td style="direction:ltr">${l.end ? esc(toEn(l.end)) : '<span class="badge badge-warning">شیفت باز</span>'}</td><td>${l.end ? fmtHours(hoursBetween(l)) : '—'}</td>
+        <td>${esc(projectNameOf(l.project))}</td><td style="text-align:right;font-size:.76rem;max-width:280px">${esc(l.desc)}</td>
+        <td><div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">${open ? `<button class="btn btn-sm btn-gold" onclick="forceCloseLog(${l.id})">بستن شیفت</button>` : `<button class="btn btn-sm btn-success" onclick="approveLog(${l.id})">تایید</button>`}<button class="btn btn-sm btn-danger" onclick="openReject(${l.id})">رد</button></div></td></tr>`;
+    }).join('') || '<tr><td colspan="8" style="padding:16px;color:#64748b">✓ همه ترددها بررسی شده‌اند.</td></tr>';
+}
+const findLog = (d, id) => d.worklogs.find(l => String(l.id) === String(id));
+function approveLog(id) {
+    return mutate(d => { const l = findLog(d, id); if (!l) throw new Error('رکورد پیدا نشد (شاید پرسنل آن را لغو کرده است).'); if (!l.end) throw new Error('شیفت هنوز باز است؛ ابتدا بسته شود.'); if (l.approval === 'approved') return 'noop'; l.approval = 'approved'; l.approvedBy = currentAdmin.username; audit(d, 'تایید تردد', `${l.name} — ${toEn(l.date)}`); }, 'approve ' + id, '✓ تایید شد.');
+}
+function openReject(id) { document.getElementById('rej-id').value = id; document.getElementById('rej-reason').value = ''; document.getElementById('modal-reject').style.display = 'flex'; }
+function confirmReject() {
+    const id = document.getElementById('rej-id').value, reason = document.getElementById('rej-reason').value.trim();
+    if (!reason) { toast('علت رد را بنویسید.', 'err'); return; }
+    closeModal('modal-reject');
+    mutate(d => { const l = findLog(d, id); if (!l) throw new Error('رکورد پیدا نشد.'); l.approval = 'rejected'; l.rejectReason = reason; audit(d, 'رد تردد', `${l.name} — ${toEn(l.date)}: ${reason}`); }, 'reject ' + id, 'رد شد.');
+}
+function forceCloseLog(id) {
+    const t = prompt('ساعت خروج (مثل 17:30) — این شیفت توسط مدیر بسته می‌شود:', nowHM()); if (!t) return;
+    const m = toEn(t).match(/^(\d{1,2}):(\d{2})$/); if (!m) { toast('ساعت را به شکل 17:30 وارد کنید.', 'err'); return; }
+    mutate(d => { const l = findLog(d, id); if (!l || l.end) throw new Error('شیفت دیگر باز نیست.'); l.end = m[1].padStart(2, '0') + ':' + m[2]; l.endTs = null; l.desc = (l.desc && l.desc !== 'حضور فعال در کارگاه' ? l.desc + ' — ' : '') + 'خروج توسط مدیر ثبت شد'; audit(d, 'بستن شیفت باز', `${l.name} — ${toEn(l.date)} خروج ${l.end}`); }, 'force close ' + id, '✓ شیفت بسته شد.');
+}
+function approveAllPendingLogs() {
+    if (!confirm('همه شیفت‌های بسته‌شده و در انتظار تایید شوند؟ (شیفت‌های باز دست نمی‌خورند)')) return;
+    mutate(d => { let n = 0; d.worklogs.forEach(l => { if (l.approval === 'pending' && l.end) { l.approval = 'approved'; l.approvedBy = currentAdmin.username; n++; } }); if (!n) return 'noop'; audit(d, 'تایید گروهی', n + ' تردد'); }, 'bulk approve', '✓ انجام شد.');
+}
+
+/* ---------------- اضافه‌کار و مرخصی ---------------- */
+function renderHomeOvertime() {
+    document.getElementById('home-ot-tbody').innerHTML = DB.ot.map(o => {
+        const p = (o.status || '').includes('انتظار');
+        return `<tr><td><b>${esc(o.name)}</b></td><td>${esc(toEn(o.date))}</td><td><b style="color:var(--purple)">${esc(o.hours)}</b></td><td><span class="badge badge-purple">${esc(o.location)}</span></td><td>${esc(o.task)}</td><td style="text-align:right;font-size:.75rem">${esc(o.desc)}</td>
+        <td><span class="badge ${p ? 'badge-warning' : ((o.status || '').includes('رد') ? 'badge-danger' : 'badge-success')}">${esc(o.status)}</span></td>
+        <td>${p ? `<button class="btn btn-sm btn-success" onclick="decideOT('${o.id}',true)">تایید</button> <button class="btn btn-sm btn-danger" onclick="decideOT('${o.id}',false)">رد</button>` : '—'}</td></tr>`;
+    }).join('') || '<tr><td colspan="8" style="padding:16px;color:#64748b">موردی نیست.</td></tr>';
+}
+function decideOT(id, ok) { mutate(d => { const o = d.ot.find(x => String(x.id) === String(id)); if (!o) throw new Error('پیدا نشد.'); o.status = ok ? 'تایید شده' : 'رد شد'; audit(d, ok ? 'تایید اضافه‌کار' : 'رد اضافه‌کار', `${o.name} — ${o.hours} ساعت`); }, 'ot ' + id, ok ? '✓ تایید شد.' : 'رد شد.'); }
+function approveAllPendingOT() { if (!confirm('همه اضافه‌کارهای در انتظار تایید شوند؟')) return; mutate(d => { let n = 0; d.ot.forEach(o => { if ((o.status || '').includes('انتظار')) { o.status = 'تایید شده'; n++; } }); if (!n) return 'noop'; audit(d, 'تایید گروهی اضافه‌کار', n + ' مورد'); }, 'bulk ot', '✓ انجام شد.'); }
+function renderLeaves() {
+    document.getElementById('leaves-tbody').innerHTML = DB.leaves.map(l => {
+        const p = (l.status || '').includes('انتظار');
+        return `<tr><td><b>${esc(l.name)}</b></td><td><span class="badge badge-info">${esc(l.type)}</span></td><td>${esc(toEn(l.period))}</td><td style="text-align:right">${esc(l.reason)}</td><td><span class="badge ${p ? 'badge-warning' : ((l.status || '').includes('رد') ? 'badge-danger' : 'badge-success')}">${esc(l.status)}</span></td>
+        <td>${p ? `<button class="btn btn-sm btn-success" onclick="decideLeave('${l.id}',true)">تایید</button> <button class="btn btn-sm btn-danger" onclick="decideLeave('${l.id}',false)">رد</button>` : '—'}</td></tr>`;
+    }).join('') || '<tr><td colspan="6" style="padding:16px;color:#64748b">درخواستی نیست.</td></tr>';
+}
+function decideLeave(id, ok) { mutate(d => { const l = d.leaves.find(x => String(x.id) === String(id)); if (!l) throw new Error('پیدا نشد.'); l.status = ok ? 'تایید شده' : 'رد شد'; audit(d, ok ? 'تایید مرخصی' : 'رد مرخصی', `${l.name} — ${l.period}`); }, 'leave ' + id, ok ? '✓ تایید شد.' : 'رد شد.'); }
+
+/* ---------------- نامه‌ها و پیام‌ها ---------------- */
+function setMailTab(t) { MAIL_TAB = t; renderMail(); }
+function fillMailTarget() {
+    const type = document.getElementById('ml-to-type').value, sel = document.getElementById('ml-to-value'), lab = document.getElementById('ml-to-label');
+    if (type === 'user') { lab.textContent = 'انتخاب پرسنل:'; sel.innerHTML = DB.users.map(u => `<option value="${esc(u.username)}">${esc(u.name)} (${esc(u.personnelNo || u.username)})</option>`).join(''); sel.disabled = false; }
+    else if (type === 'project') { lab.textContent = 'انتخاب پروژه:'; sel.innerHTML = DB.projects.map(p => `<option value="${esc(p.code)}">${esc(p.name)}</option>`).join(''); sel.disabled = false; }
+    else { lab.textContent = 'گیرنده:'; sel.innerHTML = '<option value="*">همه پرسنل</option>'; sel.disabled = true; }
+}
+function renderMail() {
+    ['inbox', 'sent', 'compose'].forEach(t => { document.getElementById('mseg-' + t).classList.toggle('active', t === MAIL_TAB); document.getElementById('mail-pane-' + t).style.display = t === MAIL_TAB ? 'block' : 'none'; });
+    const inbox = DB.mail.filter(m => m.dir === 'toAdmin').sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+    document.getElementById('mail-pane-inbox').innerHTML = inbox.map(m => {
+        const rd = (m.readBy || []).includes('admin');
+        return `<div class="mail-row ${rd ? '' : 'unread'}" onclick="openMail('${m.id}')"><div style="font-size:1.3rem">${rd ? '📄' : '📨'}</div><div style="flex:1"><div class="subj">${esc(m.subject)}</div><div class="meta">از: ${esc(m.fromName)} (${esc(m.fromPersonnelNo || m.fromUser)}) — ${esc(m.date)} ${esc(m.time || '')}</div></div></div>`;
+    }).join('') || '<div class="card note" style="text-align:center">پیامی از پرسنل دریافت نشده است.</div>';
+    const sent = DB.mail.filter(m => m.dir === 'toStaff').sort((a, b) => (b.ts || '').localeCompare(a.ts || ''));
+    document.getElementById('mail-pane-sent').innerHTML = sent.map(m => {
+        const tl = m.to.type === 'all' ? 'همه پرسنل' : (m.to.type === 'project' ? 'پروژه: ' + projectNameOf(m.to.value) : userOf(m.to.value).name);
+        return `<div class="mail-row" onclick="openMail('${m.id}')"><div style="font-size:1.3rem">📤</div><div style="flex:1"><div class="subj">${esc(m.subject)}</div><div class="meta">به: ${esc(tl)} — ${esc(m.date)} ${esc(m.time || '')} — خوانده‌شده توسط ${(m.readBy || []).length} نفر — ${esc(m.ref)}</div></div></div>`;
+    }).join('') || '<div class="card note" style="text-align:center">نامه‌ای ارسال نشده است.</div>';
+    if (MAIL_TAB === 'compose' && !document.getElementById('ml-to-value').options.length) fillMailTarget();
+}
+function handleSendLetter(e) {
+    e.preventDefault();
+    const type = document.getElementById('ml-to-type').value, value = document.getElementById('ml-to-value').value;
+    const subject = document.getElementById('ml-subject').value.trim(), body = document.getElementById('ml-body').value.trim();
+    if (!subject || !body) { toast('موضوع و متن را کامل کنید.', 'err'); return; }
+    if (type !== 'all' && !value) { toast('گیرنده را انتخاب کنید.', 'err'); return; }
+    const now = new Date();
+    mutate(d => {
+        d.settings.counters.letter = (d.settings.counters.letter || 0) + 1;
+        const ref = 'SRJ-' + yearJ(now) + '-' + String(d.settings.counters.letter).padStart(4, '0');
+        d.mail.unshift({ id: newId(), ref, dir: 'toStaff', to: { type, value: type === 'all' ? '*' : value }, fromName: currentAdmin.name, fromUser: currentAdmin.username, subject, body, date: todayJ(now), time: nowHM(now), ts: now.toISOString(), readBy: [] });
+        audit(d, 'ارسال نامه', `${ref} — ${subject}`);
+    }, 'send letter', '✓ نامه ارسال شد و در صندوق پرسنل نمایش داده می‌شود.').then(ok => { if (ok) { document.getElementById('ml-subject').value = ''; document.getElementById('ml-body').value = ''; MAIL_TAB = 'sent'; renderMail(); } });
+}
+function openMail(id) {
+    const m = DB.mail.find(x => String(x.id) === String(id)); if (!m) return;
+    CUR_DOC = { kind: 'mail', id: m.id, html: letterDoc(m), m };
+    document.getElementById('doc-modal-title').textContent = m.subject; document.getElementById('doc-paper').innerHTML = CUR_DOC.html;
+    document.getElementById('doc-reply-btn').style.display = m.dir === 'toAdmin' ? 'inline-flex' : 'none';
+    document.getElementById('modal-doc').style.display = 'flex';
+    if (m.dir === 'toAdmin' && !(m.readBy || []).includes('admin')) mutate(d => { const x = d.mail.find(y => String(y.id) === String(id)); if (!x) return 'noop'; x.readBy = x.readBy || []; if (x.readBy.includes('admin')) return 'noop'; x.readBy.push('admin'); }, 'read mail');
+}
+function printCurrentDoc() { if (CUR_DOC) printDoc(CUR_DOC.html); }
+function replyToCurrentDoc() {
+    const m = CUR_DOC && CUR_DOC.m; if (!m) return;
+    closeModal('modal-doc'); MAIL_TAB = 'compose'; renderMail();
+    document.getElementById('ml-to-type').value = 'user'; fillMailTarget(); document.getElementById('ml-to-value').value = m.fromUser;
+    document.getElementById('ml-subject').value = 'پاسخ: ' + m.subject; document.getElementById('ml-body').focus();
+}
+
+/* ---------------- حقوق و فیش ---------------- */
+function payrollMonth() { return toEn(document.getElementById('pr-admin-month').value).trim(); }
+function attendanceFor(un, m, mode) {
+    const logs = DB.worklogs.filter(l => normUser(l.user) === normUser(un) && l.end && l.status === 'حضور' && (!m || toEn(l.date).startsWith(m)) && (mode === 'all' ? l.approval !== 'rejected' : l.approval === 'approved'));
+    const days = new Set(logs.map(l => toEn(l.date))).size, hours = logs.reduce((s, l) => s + hoursBetween(l), 0);
+    let ot = logs.reduce((s, l) => s + (parseFloat(l.otHours) || 0), 0);
+    DB.ot.filter(o => normUser(o.user) === normUser(un) && (o.status || '').includes('تایید شده') && (!m || toEn(o.date).startsWith(m))).forEach(o => ot += parseFloat(o.hours) || 0);
+    return { logs, days, hours, ot };
+}
+function pullAttendanceForPayroll() {
+    const un = document.getElementById('pr-admin-employee').value, m = payrollMonth(), usr = DB.users.find(x => x.username === un); if (!usr) return;
+    const a = attendanceFor(un, m, 'approved');
+    document.getElementById('pr-admin-summary').innerHTML = `📊 کارکرد <b>تاییدشده</b> ${esc(m)} — ${esc(usr.name)}: حضور <b>${a.days} روز</b> | مجموع ساعت: <b>${fmtHours(a.hours)}</b> | اضافه‌کار تاییدشده: <b>${a.ot} ساعت</b>`;
+    document.getElementById('pr-adm-ot-hours').value = a.ot; calcPayroll();
+}
+function payVals() {
+    const n = id => Math.max(0, parseFloat(document.getElementById(id).value) || 0);
+    const base = n('pr-adm-base'), housing = n('pr-adm-housing'), bonus = n('pr-adm-bonus'), otHours = n('pr-adm-ot-hours'), otRate = n('pr-adm-otrate'), ins = n('pr-adm-ins'), tax = n('pr-adm-tax');
+    const otPay = otHours * otRate, gross = base + housing + bonus + otPay, deductions = ins + tax;
+    return { base, housing, bonus, otHours, otRate, otPay, ins, tax, gross, deductions, net: Math.max(0, gross - deductions) };
+}
+function calcPayroll() { const p = payVals(); document.getElementById('pr-adm-gross').textContent = money(p.gross); document.getElementById('pr-adm-ded').textContent = money(p.deductions); document.getElementById('pr-adm-net').textContent = money(p.net) + ' تومان'; }
+function issueAdminPayslip() {
+    const un = document.getElementById('pr-admin-employee').value, usr = DB.users.find(x => x.username === un); if (!usr) { toast('پرسنل را انتخاب کنید.', 'err'); return; }
+    const m = payrollMonth(); if (!/^\d{4}\/\d{2}$/.test(m)) { toast('ماه را به شکل 1405/07 وارد کنید.', 'err'); return; }
+    if (DB.payslips.some(s => normUser(s.username) === normUser(un) && s.month === m) && !confirm('برای این ماه قبلاً فیش صادر شده است. فیش جدید هم صادر شود؟')) return;
+    const p = payVals(), a = attendanceFor(un, m, 'approved');
+    mutate(d => {
+        d.settings.counters.pay = (d.settings.counters.pay || 0) + 1;
+        d.payslips.unshift(Object.assign({ id: newId(), ref: 'PAY-' + m.replace('/', '') + '-' + String(d.settings.counters.pay).padStart(4, '0'), username: usr.username, name: usr.name, personnelNo: usr.personnelNo || '', month: m, workDays: a.days, issueDate: todayJ(), readBy: [] }, p));
+        audit(d, 'صدور فیش', `${usr.name} — ${m}`);
+    }, 'payslip ' + un, `✓ فیش ${usr.name} صادر شد و در صندوق او نمایش داده می‌شود.`);
+}
+function renderAdminPayslips() {
+    document.getElementById('admin-payslips-tbody').innerHTML = DB.payslips.map(s => `<tr><td><b>${esc(s.name)}</b></td><td><code>${esc(s.personnelNo)}</code></td><td>${esc(s.month)}</td><td style="color:var(--success)">${money(s.gross)}</td><td style="color:var(--danger)">${money(s.deductions)}</td><td style="color:var(--accent);font-weight:800">${money(s.net)}</td><td>${esc(s.issueDate)}</td>
+    <td><button class="btn btn-sm btn-outline" onclick="viewSlip('${s.id}')">مشاهده / چاپ</button> <button class="btn btn-sm btn-danger" onclick="deleteSlip('${s.id}')">حذف</button></td></tr>`).join('') || '<tr><td colspan="8" style="padding:16px;color:#64748b">فیشی صادر نشده است.</td></tr>';
+}
+function viewSlip(id) { const s = DB.payslips.find(x => String(x.id) === String(id)); if (!s) return; CUR_DOC = { kind: 'slip', html: payslipDoc(s, userOf(s.username)) }; document.getElementById('doc-modal-title').textContent = 'فیش حقوقی ' + s.month; document.getElementById('doc-paper').innerHTML = CUR_DOC.html; document.getElementById('doc-reply-btn').style.display = 'none'; document.getElementById('modal-doc').style.display = 'flex'; }
+function deleteSlip(id) { if (!confirm('این فیش حذف شود؟ (از صندوق پرسنل هم حذف می‌شود)')) return; mutate(d => { const s = d.payslips.find(x => String(x.id) === String(id)); d.payslips = d.payslips.filter(x => String(x.id) !== String(id)); if (s) audit(d, 'حذف فیش', `${s.name} — ${s.month}`); }, 'del slip', 'حذف شد.'); }
+
+/* ---------------- گزارش و اکسل ---------------- */
+function reportData() {
+    const m = toEn(document.getElementById('rep-month').value).trim(), un = document.getElementById('rep-user').value, mode = document.getElementById('rep-status').value;
+    const logs = DB.worklogs.filter(l => l.end && (!m || toEn(l.date).startsWith(m)) && (!un || normUser(l.user) === normUser(un)) && (mode === 'all' ? l.approval !== 'rejected' : l.approval === 'approved'))
+        .sort((a, b) => toEn(a.date).localeCompare(toEn(b.date)) || (a.startTs || '').localeCompare(b.startTs || ''));
+    return { m, un, mode, logs };
+}
+function renderCompanySheet() {
+    const { logs } = reportData();
+    document.getElementById('company-sheet-tbody').innerHTML = logs.map((r, i) => `<tr><td>${i + 1}</td><td><b>${esc(r.name)}</b></td><td>${esc(toEn(r.date))}</td><td>${esc(toEn(r.start))}</td><td>${esc(toEn(r.end))}</td><td>${fmtHours(hoursBetween(r))}</td><td>${esc(projectNameOf(r.project))}</td><td style="text-align:right">${esc(r.desc)}</td><td>${esc(r.otHours) || 0}</td><td><span class="badge ${r.approval === 'approved' ? 'badge-success' : 'badge-warning'}">${approvalLabel(r.approval)}</span></td></tr>`).join('') || '<tr><td colspan="10" style="padding:16px;color:#64748b">رکوردی برای این فیلتر نیست.</td></tr>';
+}
+async function exportCompanyExcel() {
+    const { m, un, logs } = reportData();
+    const rows = logs.map((r, i) => ({ idx: i + 1, name: r.name, no: userOf(r.user).personnelNo || '', date: toEn(r.date), project: projectNameOf(r.project), start: toEn(r.start), end: toEn(r.end), hours: hoursBetween(r), ot: r.otHours || 0, status: approvalLabel(r.approval), statusKey: r.approval, desc: r.desc || '' }));
+    const per = {}; logs.forEach(r => { const k = r.user; per[k] = per[k] || { name: r.name, no: userOf(r.user).personnelNo || '', days: new Set(), hours: 0, ot: 0 }; per[k].days.add(toEn(r.date)); per[k].hours += hoursBetween(r); per[k].ot += parseFloat(r.otHours) || 0; });
+    DB.ot.filter(o => (o.status || '').includes('تایید شده') && (!m || toEn(o.date).startsWith(m)) && (!un || normUser(o.user) === normUser(un))).forEach(o => { const k = o.user; per[k] = per[k] || { name: o.name, no: userOf(o.user).personnelNo || '', days: new Set(), hours: 0, ot: 0 }; per[k].ot += parseFloat(o.hours) || 0; });
+    const sum = Object.values(per).map((p, i) => ({ idx: i + 1, name: p.name, no: p.no, days: p.days.size, hours: Math.round(p.hours * 100) / 100, ot: p.ot }));
+    const info = `دوره: ${m || 'همه'}     |     تاریخ صدور: ${todayJ()}     |     تهیه‌کننده: ${currentAdmin.name}`;
+    const sheets = [{
+        name: 'کارکرد تاییدشده', title: 'گزارش رسمی کارکرد پرسنل', infoLine: info,
+        columns: [{ header: 'ردیف', key: 'idx', width: 7 }, { header: 'نام و نام خانوادگی', key: 'name', width: 22 }, { header: 'پرسنلی', key: 'no', width: 12 }, { header: 'تاریخ', key: 'date', width: 13 }, { header: 'پروژه', key: 'project', width: 22 }, { header: 'ورود', key: 'start', width: 9 }, { header: 'خروج', key: 'end', width: 9 },
+        { header: 'مدت (ساعت)', key: 'hours', width: 12, type: 'number', fmt: '0.00' }, { header: 'اضافه‌کار', key: 'ot', width: 11, type: 'number', fmt: '0.0' }, { header: 'وضعیت', key: 'status', width: 14, color: approvalColor }, { header: 'شرح کارکرد', key: 'desc', width: 44, align: 'right', wrap: true }],
+        rows, totals: { idx: 'جمع', hours: Math.round(rows.reduce((s, r) => s + r.hours, 0) * 100) / 100, ot: rows.reduce((s, r) => s + (+r.ot || 0), 0) }, notes: []
+    }, {
+        name: 'خلاصه پرسنل', title: 'خلاصه کارکرد به تفکیک پرسنل', infoLine: info,
+        columns: [{ header: 'ردیف', key: 'idx', width: 7 }, { header: 'نام و نام خانوادگی', key: 'name', width: 26 }, { header: 'پرسنلی', key: 'no', width: 14 }, { header: 'روزهای حضور', key: 'days', width: 14, type: 'number', fmt: '0' }, { header: 'جمع ساعات', key: 'hours', width: 14, type: 'number', fmt: '0.00' }, { header: 'اضافه‌کار تاییدشده', key: 'ot', width: 18, type: 'number', fmt: '0.0' }],
+        rows: sum, totals: { idx: 'جمع', days: sum.reduce((s, r) => s + r.days, 0), hours: Math.round(sum.reduce((s, r) => s + r.hours, 0) * 100) / 100, ot: sum.reduce((s, r) => s + r.ot, 0) }, notes: []
+    }];
+    try { await exportStyledXlsx(`SRJ_کارکرد_${(m || 'همه').replace(/\//g, '-')}.xlsx`, sheets); toast('✓ فایل اکسل ساخته شد.', 'ok'); } catch (e) { toast(e.message, 'err'); }
+}
+function printCompanyReport() {
+    const { m, logs } = reportData();
+    const rows = logs.map(r => ({ date: toEn(r.date), project: projectNameOf(r.project) + ' — ' + r.name, start: toEn(r.start), end: toEn(r.end), hoursText: fmtHours(hoursBetween(r)), status: approvalLabel(r.approval), ot: r.otHours || 0, desc: r.desc }));
+    const days = new Set(logs.map(l => l.user + toEn(l.date))).size;
+    printDoc(attendanceDoc({ name: 'گزارش تجمیعی پرسنل', personnelNo: '-', roleTitle: '-', monthLabel: m || 'همه', rows, totals: { days, hoursText: fmtHours(logs.reduce((s, l) => s + hoursBetween(l), 0)), ot: logs.reduce((s, l) => s + (parseFloat(l.otHours) || 0), 0) } }));
+}
+
+/* ---------------- پرسنل ---------------- */
+function renderAdminUsers() {
+    const q = (document.getElementById('users-search').value || '').trim().toLowerCase();
+    let us = DB.users; if (q) us = us.filter(u => [u.name, u.username, u.personnelNo].some(x => (x || '').toLowerCase().includes(q)));
+    document.getElementById('admin-users-tbody').innerHTML = us.map(u => `<tr><td>${avatarOf(u)}</td><td><b>${esc(u.name)}</b></td><td><code>${esc(u.personnelNo || '-')}</code></td><td><code>${esc(u.username)}</code></td><td><code>${esc(u.password)}</code></td><td>${esc(u.roleTitle)}</td><td>${esc(projectNameOf(u.project))}</td><td>${esc(u.cycleStart || '-')}</td>
+    <td><div style="display:flex;gap:4px;justify-content:center"><button class="btn btn-sm btn-outline" onclick="editStaff(${u.id})">ویرایش</button><button class="btn btn-sm btn-danger" onclick="deleteStaff(${u.id})">حذف</button></div></td></tr>`).join('') || '<tr><td colspan="9" style="padding:16px;color:#64748b">پرسنلی نیست.</td></tr>';
+}
+function openNewStaffModal() {
+    ['stf-edit-id', 'stf-name', 'stf-username', 'stf-role-title', 'stf-personnel-no', 'stf-cycle-start'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('stf-password').value = String(Math.floor(1000 + Math.random() * 9000)); document.getElementById('stf-username').disabled = false;
+    document.getElementById('stf-photo-preview').style.display = 'none'; document.getElementById('stf-photo-file').value = ''; tempPhotoData = '';
+    document.getElementById('staff-modal-title').textContent = '👤 تعریف پرسنل جدید'; fillDropdowns(); document.getElementById('modal-staff').style.display = 'flex';
+}
+function previewStaffPhoto(ev) {
+    const f = ev.target.files[0]; if (!f) return;
+    const img = new Image(), r = new FileReader();
+    r.onload = () => { img.onload = () => { const c = document.createElement('canvas'), s = 160, k = Math.min(1, s / Math.min(img.width, img.height)); c.width = c.height = s; const ctx = c.getContext('2d'); const w = img.width * Math.max(s / img.width, s / img.height), h = img.height * Math.max(s / img.width, s / img.height); ctx.drawImage(img, (s - w) / 2, (s - h) / 2, w, h); tempPhotoData = c.toDataURL('image/jpeg', 0.75); const p = document.getElementById('stf-photo-preview'); p.src = tempPhotoData; p.style.display = 'inline-block'; }; img.src = r.result; };
+    r.readAsDataURL(f);
+}
+function handleSaveStaff(e) {
+    e.preventDefault();
+    const id = document.getElementById('stf-edit-id').value, name = document.getElementById('stf-name').value.trim(), username = normUser(document.getElementById('stf-username').value), password = normPass(document.getElementById('stf-password').value);
+    if (!/^[a-z0-9._-]{2,30}$/.test(username)) { toast('نام کاربری فقط باید حروف انگلیسی، عدد و . _ - باشد (بدون فاصله و بدون فارسی).', 'err'); return; }
+    if (password.length < 3) { toast('رمز عبور حداقل ۳ کاراکتر باشد.', 'err'); return; }
+    const rec = { name, roleTitle: document.getElementById('stf-role-title').value.trim(), personnelNo: document.getElementById('stf-personnel-no').value.trim(), project: document.getElementById('stf-project').value, cycleStart: document.getElementById('stf-cycle-start').value, password };
+    mutate(d => {
+        if (id) { const u = d.users.find(x => String(x.id) === String(id)); if (!u) throw new Error('پرسنل پیدا نشد.'); Object.assign(u, rec); if (tempPhotoData) u.photo = tempPhotoData; audit(d, 'ویرایش پرسنل', u.name); }
+        else { if (d.users.some(x => normUser(x.username) === username) || d.admins.some(x => normUser(x.username) === username)) throw new Error('این نام کاربری قبلاً استفاده شده است.'); d.users.push(Object.assign({ id: newId(), username, role: 'staff', department: '', photo: tempPhotoData || '' }, rec)); audit(d, 'افزودن پرسنل', name + ' (' + username + ')'); }
+    }, 'save staff ' + username, '✓ ذخیره شد. پرسنل می‌تواند با «' + username + '» وارد شود.').then(ok => { if (ok) closeModal('modal-staff'); });
+}
+function editStaff(id) {
+    const u = DB.users.find(x => String(x.id) === String(id)); if (!u) return; fillDropdowns();
+    document.getElementById('stf-edit-id').value = u.id; document.getElementById('staff-modal-title').textContent = '✏️ ویرایش: ' + u.name;
+    document.getElementById('stf-name').value = u.name; document.getElementById('stf-username').value = u.username; document.getElementById('stf-username').disabled = true;
+    document.getElementById('stf-password').value = u.password; document.getElementById('stf-role-title').value = u.roleTitle || ''; document.getElementById('stf-personnel-no').value = u.personnelNo || '';
+    document.getElementById('stf-project').value = u.project || ''; document.getElementById('stf-cycle-start').value = u.cycleStart || ''; tempPhotoData = '';
+    const p = document.getElementById('stf-photo-preview'); if (u.photo) { p.src = u.photo; p.style.display = 'inline-block'; } else p.style.display = 'none';
+    document.getElementById('modal-staff').style.display = 'flex';
+}
+function deleteStaff(id) {
+    const u = DB.users.find(x => String(x.id) === String(id)); if (!u) return;
+    if (!confirm(`«${u.name}» حذف شود؟ سوابق تردد او در سیستم می‌ماند ولی دیگر نمی‌تواند وارد شود.`)) return;
+    mutate(d => { d.users = d.users.filter(x => String(x.id) !== String(id)); audit(d, 'حذف پرسنل', u.name); }, 'delete staff', 'حذف شد.');
+}
+
+/* ---------------- پروژه‌ها ---------------- */
+function renderProjects() {
+    document.getElementById('admin-projects-tbody').innerHTML = DB.projects.map(p => `<tr><td><code>${esc(p.code)}</code></td><td><b>${esc(p.name)}</b></td><td>${esc(p.radius)}</td><td style="direction:ltr">${p.lat != null && p.lat !== '' ? esc(p.lat) + ', ' + esc(p.lng) : '—'}</td><td><span class="badge badge-success">${esc(p.workDays)} روز</span></td><td><span class="badge badge-warning">${esc(p.restDays)} روز</span></td>
+    <td><button class="btn btn-sm btn-outline" onclick="editProject('${esc(p.code)}')">ویرایش</button> <button class="btn btn-sm btn-danger" onclick="deleteProject('${esc(p.code)}')">حذف</button></td></tr>`).join('') || '<tr><td colspan="7" style="padding:16px;color:#64748b">پروژه‌ای نیست.</td></tr>';
+}
+function openNewProjectModal() { document.getElementById('prj-edit-code').value = ''; document.getElementById('project-modal-title').textContent = '📍 پروژه جدید'; ['prj-code', 'prj-name', 'prj-lat', 'prj-lng'].forEach(i => document.getElementById(i).value = ''); document.getElementById('prj-code').disabled = false; document.getElementById('prj-radius').value = 250; document.getElementById('prj-work-days').value = 30; document.getElementById('prj-rest-days').value = 10; document.getElementById('modal-project').style.display = 'flex'; }
+function editProject(code) { const p = DB.projects.find(x => x.code === code); if (!p) return; document.getElementById('prj-edit-code').value = p.code; document.getElementById('project-modal-title').textContent = '✏️ ' + p.name; document.getElementById('prj-code').value = p.code; document.getElementById('prj-code').disabled = true; document.getElementById('prj-name').value = p.name; document.getElementById('prj-radius').value = p.radius; document.getElementById('prj-lat').value = p.lat != null ? p.lat : ''; document.getElementById('prj-lng').value = p.lng != null ? p.lng : ''; document.getElementById('prj-work-days').value = p.workDays; document.getElementById('prj-rest-days').value = p.restDays; document.getElementById('modal-project').style.display = 'flex'; }
+function useMyLocation() { if (!navigator.geolocation) { toast('مرورگر موقعیت‌یابی ندارد.', 'err'); return; } navigator.geolocation.getCurrentPosition(p => { document.getElementById('prj-lat').value = p.coords.latitude.toFixed(6); document.getElementById('prj-lng').value = p.coords.longitude.toFixed(6); toast('موقعیت ثبت شد.', 'ok'); }, () => toast('دسترسی به موقعیت داده نشد.', 'err')); }
+function handleSaveProject(e) {
+    e.preventDefault();
+    const edit = document.getElementById('prj-edit-code').value, code = document.getElementById('prj-code').value.trim().toLowerCase();
+    if (!/^[a-z0-9_-]{2,30}$/.test(code)) { toast('کد پروژه فقط حروف انگلیسی/عدد/خط تیره.', 'err'); return; }
+    const latS = toEn(document.getElementById('prj-lat').value).trim(), lngS = toEn(document.getElementById('prj-lng').value).trim();
+    const lat = latS === '' ? null : parseFloat(latS), lng = lngS === '' ? null : parseFloat(lngS);
+    if ((latS !== '' && isNaN(lat)) || (lngS !== '' && isNaN(lng))) { toast('مختصات نامعتبر است.', 'err'); return; }
+    const rec = { name: document.getElementById('prj-name').value.trim(), radius: Math.max(0, parseFloat(document.getElementById('prj-radius').value) || 0), lat, lng, workDays: Math.max(1, parseInt(document.getElementById('prj-work-days').value) || 1), restDays: Math.max(1, parseInt(document.getElementById('prj-rest-days').value) || 1) };
+    mutate(d => { if (edit) { const p = d.projects.find(x => x.code === edit); if (!p) throw new Error('پیدا نشد.'); Object.assign(p, rec); } else { if (d.projects.some(p => p.code === code)) throw new Error('این کد قبلاً استفاده شده.'); d.projects.push(Object.assign({ code }, rec)); } audit(d, 'ذخیره پروژه', rec.name); }, 'project ' + code, '✓ پروژه ذخیره شد.').then(ok => { if (ok) closeModal('modal-project'); });
+}
+function deleteProject(code) {
+    if (DB.users.some(u => u.project === code)) { toast('این پروژه به پرسنل تخصیص داده شده؛ ابتدا پروژه آن‌ها را تغییر دهید.', 'err'); return; }
+    if (!confirm('پروژه حذف شود؟')) return;
+    mutate(d => { d.projects = d.projects.filter(p => p.code !== code); audit(d, 'حذف پروژه', code); }, 'del project', 'حذف شد.');
+}
+
+/* ---------------- تنظیمات ---------------- */
+function renderSettings() {
+    const c = ghConfig() || {}; document.getElementById('gh-conn-info').innerHTML = `<b>مخزن:</b> ${esc(c.owner)}/${esc(c.repo)}<br><b>شاخه:</b> ${esc(c.branch)}<br><b>فایل داده:</b> ${esc(c.path)}`;
+    const active = document.activeElement && document.activeElement.closest && document.activeElement.closest('#tab-settings form');
+    if (!active) { const l = lhSettings(); [['company', 'company'], ['latin', 'latin'], ['tagline', 'tagline'], ['address', 'address'], ['phone', 'phone'], ['email', 'email'], ['website', 'website']].forEach(([k, id]) => { document.getElementById('lh-' + id).value = l[k] || ''; }); }
+    document.getElementById('admin-admins-tbody').innerHTML = DB.admins.map(a => `<tr><td><b>${esc(a.name)}</b></td><td><code>${esc(a.username)}</code></td><td><button class="btn btn-sm btn-outline" onclick="editAdminUser('${esc(a.username)}')">ویرایش</button> <button class="btn btn-sm btn-danger" onclick="deleteAdminUser('${esc(a.username)}')">حذف</button></td></tr>`).join('');
+    document.getElementById('audit-tbody').innerHTML = DB.audit.slice(0, 100).map(x => `<tr><td>${esc(x.date)}</td><td>${esc(x.time)}</td><td>${esc(x.name || x.user)}</td><td><b>${esc(x.action)}</b></td><td style="text-align:right">${esc(x.detail)}</td></tr>`).join('') || '<tr><td colspan="5" style="padding:14px;color:#64748b">هنوز موردی ثبت نشده.</td></tr>';
+}
+function handleSaveLetterhead(e) {
+    e.preventDefault();
+    const v = id => document.getElementById('lh-' + id).value.trim();
+    mutate(d => { Object.assign(d.settings.letterhead, { company: v('company'), latin: v('latin'), tagline: v('tagline'), address: v('address'), phone: v('phone'), email: v('email'), website: v('website') }); audit(d, 'ویرایش سربرگ', ''); }, 'letterhead', '✓ سربرگ ذخیره شد.');
+}
+function previewLetterhead() {
+    const v = id => document.getElementById('lh-' + id).value.trim(), keep = JSON.parse(JSON.stringify(DB.settings.letterhead));
+    Object.assign(DB.settings.letterhead, { company: v('company'), latin: v('latin'), tagline: v('tagline'), address: v('address'), phone: v('phone'), email: v('email'), website: v('website') });
+    CUR_DOC = { kind: 'x', html: letterheadDoc({ refNo: 'SRJ-' + yearJ() + '-0000', date: todayJ(), title: 'پیش‌نمایش سربرگ', body: '<p>متن نمونه نامه رسمی برای بررسی ظاهر سربرگ و پاصفحه.</p>' }) };
+    DB.settings.letterhead = keep;
+    document.getElementById('doc-modal-title').textContent = 'پیش‌نمایش سربرگ'; document.getElementById('doc-paper').innerHTML = CUR_DOC.html; document.getElementById('doc-reply-btn').style.display = 'none'; document.getElementById('modal-doc').style.display = 'flex';
+}
+function openNewAdminModal() { ['adm-edit-username', 'adm-name', 'adm-username', 'adm-password'].forEach(i => document.getElementById(i).value = ''); document.getElementById('adm-username').disabled = false; document.getElementById('admin-modal-title').textContent = '👤 مدیر جدید'; document.getElementById('modal-admin').style.display = 'flex'; }
+function editAdminUser(un) { const a = DB.admins.find(x => x.username === un); if (!a) return; document.getElementById('adm-edit-username').value = a.username; document.getElementById('admin-modal-title').textContent = '✏️ ' + a.name; document.getElementById('adm-name').value = a.name; document.getElementById('adm-username').value = a.username; document.getElementById('adm-username').disabled = true; document.getElementById('adm-password').value = a.password; document.getElementById('modal-admin').style.display = 'flex'; }
+function handleSaveAdmin(e) {
+    e.preventDefault();
+    const edit = document.getElementById('adm-edit-username').value, name = document.getElementById('adm-name').value.trim(), username = normUser(document.getElementById('adm-username').value), password = normPass(document.getElementById('adm-password').value);
+    if (!/^[a-z0-9._-]{2,30}$/.test(username)) { toast('یوزرنیم فقط انگلیسی/عدد.', 'err'); return; }
+    if (password.length < 4) { toast('رمز حداقل ۴ کاراکتر.', 'err'); return; }
+    mutate(d => { if (edit) { const a = d.admins.find(x => x.username === edit); if (!a) throw new Error('پیدا نشد.'); a.name = name; a.password = password; } else { if (d.admins.some(a => normUser(a.username) === username) || d.users.some(u => normUser(u.username) === username)) throw new Error('این یوزرنیم قبلاً استفاده شده.'); d.admins.push({ username, password, name }); } audit(d, 'ذخیره مدیر', username); }, 'admin ' + username, '✓ ذخیره شد.').then(ok => { if (ok) closeModal('modal-admin'); });
+}
+function deleteAdminUser(un) {
+    if (DB.admins.length <= 1) { toast('حداقل یک مدیر باید بماند.', 'err'); return; }
+    if (currentAdmin.username === un) { toast('حساب خودتان را نمی‌توانید حذف کنید.', 'err'); return; }
+    if (!confirm('این مدیر حذف شود؟')) return;
+    mutate(d => { d.admins = d.admins.filter(a => a.username !== un); audit(d, 'حذف مدیر', un); }, 'del admin', 'حذف شد.');
+}
+
+</script>
+</body>
+</html>
