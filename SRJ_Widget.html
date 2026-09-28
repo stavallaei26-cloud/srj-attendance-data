@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ویجت SRJ - وضعیت زنده</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;font-family:'Vazirmatn',sans-serif!important;margin:0;padding:0}
+body{background:#0f172a;color:#f1f5f9;min-height:100vh;padding:14px;max-width:420px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.brand{font-weight:900;color:#4fc3e8}.clock{font-size:.75rem;color:#94a3b8;direction:ltr}
+.card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:14px;margin-bottom:12px}
+.name{font-weight:800}.role{font-size:.72rem;color:#94a3b8;margin-top:2px}.st{margin-top:10px;font-size:.85rem;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.box{background:#0f172a;border:1px solid #334155;border-radius:12px;padding:8px;text-align:center}.box .l{font-size:.65rem;color:#94a3b8}.box .v{font-size:1.05rem;font-weight:900;direction:ltr;margin-top:2px}
+.ok{color:#4ade80}.pe{color:#fbbf24}
+.btn{display:block;text-align:center;background:#0097cc;color:#fff;padding:13px;border-radius:12px;font-weight:800;font-size:.88rem;margin-top:10px;text-decoration:none}
+.btn.red{background:#e11d48}.btn.gray{background:#334155}.muted{color:#94a3b8;font-size:.78rem;text-align:center;padding:24px 0;line-height:2}
+.env{display:inline-block;background:#ef4444;color:#fff;border-radius:10px;padding:1px 8px;font-size:.7rem;margin-right:6px}
+</style></head><body>
+<div class="top"><div class="brand">SRJ · ویجت</div><div class="clock" id="clk">--:--:--</div></div>
+<div id="c"><div class="muted">در حال بارگذاری...</div></div>
+<script>
+/* =====================================================================
+   SRJ CORE — هسته مشترک داشبورد مدیریت، اپ پرسنل و ویجت
+   ذخیره‌سازی: یک فایل JSON روی گیت‌هاب (Contents API)
+   قاعده طلایی: هر تغییر «روی تازه‌ترین نسخه گیت‌هاب» اعمال می‌شود (updateDb)،
+   نه روی نسخه قدیمی حافظه؛ بنابراین ثبت‌های هم‌زمان مدیر و پرسنل هم‌دیگر را پاک نمی‌کنند.
+===================================================================== */
+const GH_CFG_KEY = 'srj_gh_config_v1';
+
+function esc(v) {
+    if (v === undefined || v === null) return '';
+    return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function toEn(s) {
+    return String(s === undefined || s === null ? '' : s)
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+}
+function normUser(s) { return toEn(s).trim().toLowerCase(); }
+function normPass(s) { return toEn(s).trim(); }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function ghConfig() { try { return JSON.parse(localStorage.getItem(GH_CFG_KEY) || 'null'); } catch (e) { return null; } }
+function saveGhConfig(cfg) { localStorage.setItem(GH_CFG_KEY, JSON.stringify(cfg)); }
+function clearGhConfig() { localStorage.removeItem(GH_CFG_KEY); }
+
+function b64EncodeUtf8(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+}
+function b64DecodeUtf8(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+}
+
+/* ---------- تاریخ و ساعت (همیشه با ارقام لاتین تا فیلتر و مقایسه خراب نشود) ---------- */
+function jalaliParts(d) {
+    const f = new Intl.DateTimeFormat('en-u-ca-persian-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const p = {};
+    f.formatToParts(d || new Date()).forEach(x => { p[x.type] = x.value; });
+    return p;
+}
+function todayJ(d) { const p = jalaliParts(d); return `${p.year}/${p.month}/${p.day}`; }
+function monthJ(d) { const p = jalaliParts(d); return `${p.year}/${p.month}`; }
+function yearJ(d) { return jalaliParts(d).year; }
+function nowHM(d) { return (d || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
+function isJDate(s) { return /^\d{4}\/\d{2}\/\d{2}$/.test(toEn(s).trim()); }
+function fixJDate(s) {
+    // 1405/7/6 -> 1405/07/06
+    const m = toEn(s).trim().match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+    if (!m) return null;
+    return `${m[1]}/${m[2].padStart(2, '0')}/${m[3].padStart(2, '0')}`;
+}
+function sameLocalDay(ts, d) {
+    if (!ts) return false;
+    const a = new Date(ts), b = d || new Date();
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function hoursBetween(l) {
+    // ساعت کارکرد یک رکورد (بر اساس مُهر زمانی؛ در نبود آن بر اساس ساعت‌های متنی)
+    if (!l || !l.start || !l.end) return 0;
+    if (l.startTs && l.endTs) {
+        const h = (new Date(l.endTs) - new Date(l.startTs)) / 3600000;
+        if (isFinite(h) && h >= 0) return Math.round(h * 100) / 100;
+    }
+    const a = toEn(l.start).match(/(\d{1,2}):(\d{2})/), b = toEn(l.end).match(/(\d{1,2}):(\d{2})/);
+    if (!a || !b) return 0;
+    let m = (+b[1] * 60 + +b[2]) - (+a[1] * 60 + +a[2]);
+    if (m < 0) m += 1440;
+    return Math.round(m / 60 * 100) / 100;
+}
+function fmtHours(h) {
+    h = Number(h) || 0;
+    const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    return `${hh}:${String(mm).padStart(2, '0')}`;
+}
+function haversineM(a, b) {
+    const R = 6371000, r = x => x * Math.PI / 180;
+    const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return Math.round(2 * R * Math.asin(Math.sqrt(s)));
+}
+
+/* ---------- ساختار پایگاه داده ---------- */
+function normalizeDb(d) {
+    d = (d && typeof d === 'object') ? d : {};
+    ['admins', 'users', 'projects', 'worklogs', 'ot', 'leaves', 'payslips', 'mail', 'audit'].forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+    if (!d.settings || typeof d.settings !== 'object') d.settings = {};
+    d.settings.letterhead = Object.assign({
+        company: 'شرکت ثابت ره جویان جهان زمین', latin: 'SRJ Group', tagline: 'Mineral Exploration & Extraction',
+        address: '', phone: '', email: '', website: ''
+    }, d.settings.letterhead || {});
+    if (!d.settings.counters || typeof d.settings.counters !== 'object') d.settings.counters = {};
+    if (!d.settings.counters.letter) d.settings.counters.letter = 0;
+    return d;
+}
+function emptyData() {
+    return normalizeDb({
+        admins: [{ username: 'admin', password: 'admin123', name: 'مدیر سیستم' }],
+        projects: [
+            { code: 'afg-camp', name: 'کمپ معدنی افغانستان', radius: 250, workDays: 30, restDays: 10 },
+            { code: 'sarcheshmeh', name: 'معدن سرچشمه', radius: 350, workDays: 22, restDays: 8 }
+        ]
+    });
+}
+
+/* ---------- ارتباط با گیت‌هاب ---------- */
+let DB = null, DB_SHA = null, DB_ETAG = null;
+let onConn = function () {};        // (state: 'ok'|'syncing'|'error', msg)
+let onDbApplied = function () {};   // بعد از هر ذخیره موفق
+
+function netErr(e) { const err = new Error('عدم اتصال به اینترنت یا گیت‌هاب'); err.network = true; err.cause = e; return err; }
+
+async function ghRequest(url, opts) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
+    try { return await fetch(url, Object.assign({}, opts, { signal: ctrl.signal, cache: 'no-store' })); }
+    catch (e) { throw netErr(e); }
+    finally { clearTimeout(timer); }
+}
+function ghHeaders(extra) {
+    const cfg = ghConfig();
+    return Object.assign({ 'Authorization': 'Bearer ' + cfg.token, 'Accept': 'application/vnd.github+json' }, extra || {});
+}
+function ghBase() { const c = ghConfig(); return `https://api.github.com/repos/${c.owner}/${c.repo}`; }
+
+async function ghHttpError(res, what) {
+    let msg = '';
+    try { msg = (await res.json()).message || ''; } catch (e) { }
+    if (res.status === 401) return new Error('توکن نامعتبر یا منقضی شده است.');
+    if (res.status === 403) {
+        if (res.headers.get('x-ratelimit-remaining') === '0' || /rate limit/i.test(msg)) return new Error('سقف درخواست گیت‌هاب پر شده؛ چند دقیقه بعد دوباره تلاش کنید.');
+        return new Error('توکن دسترسی کافی ندارد (باید Contents: Read and write داشته باشد).');
+    }
+    return new Error((what || 'خطای گیت‌هاب') + ' (کد ' + res.status + ')' + (msg ? ' — ' + msg : ''));
+}
+
+async function ghCheckRepo() {
+    const res = await ghRequest(ghBase(), { headers: ghHeaders() });
+    if (res.status === 404) throw new Error('مخزن پیدا نشد یا توکن به آن دسترسی ندارد. نام owner/repo و دسترسی توکن را بررسی کنید.');
+    if (!res.ok) throw await ghHttpError(res, 'خطا در بررسی مخزن');
+    const j = await res.json();
+    if (j.permissions && j.permissions.push === false) throw new Error('توکن فقط دسترسی خواندن دارد؛ باید Contents: Read and write بدهید.');
+    return j;
+}
+
+async function ghFetchFile(etag) {
+    const cfg = ghConfig();
+    if (!cfg) throw new Error('اتصال به گیت‌هاب تنظیم نشده است.');
+    const headers = ghHeaders(etag ? { 'If-None-Match': etag } : {});
+    const url = `${ghBase()}/contents/${encodeURI(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}` + (etag ? '' : '&_=' + Date.now());
+    const res = await ghRequest(url, { headers });
+    if (res.status === 304) return { notModified: true };
+    if (res.status === 404) return { data: emptyData(), sha: null, etag: null, isNew: true };
+    if (!res.ok) throw await ghHttpError(res, 'خطای اتصال به گیت‌هاب');
+    const json = await res.json();
+    let text;
+    if (json.content && json.encoding === 'base64') text = b64DecodeUtf8(json.content);
+    else {
+        // فایل بزرگ‌تر از ۱ مگابایت: از Blob API می‌خوانیم
+        const br = await ghRequest(`${ghBase()}/git/blobs/${json.sha}`, { headers: ghHeaders() });
+        if (!br.ok) throw await ghHttpError(br, 'خطا در خواندن فایل بزرگ');
+        text = b64DecodeUtf8((await br.json()).content);
+    }
+    let data;
+    try { data = JSON.parse(text); } catch (e) { throw new Error('فایل داده روی گیت‌هاب خراب یا نامعتبر است.'); }
+    return { data: normalizeDb(data), sha: json.sha, etag: res.headers.get('etag') };
+}
+
+async function ghSaveFile(data, sha, message) {
+    const cfg = ghConfig();
+    const body = { message: message || 'update SRJ data', content: b64EncodeUtf8(JSON.stringify(data)), branch: cfg.branch };
+    if (sha) body.sha = sha;
+    const res = await ghRequest(`${ghBase()}/contents/${encodeURI(cfg.path)}`, {
+        method: 'PUT', headers: ghHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body)
+    });
+    if (res.ok) return (await res.json()).content.sha;
+    let msg = '';
+    try { msg = (await res.clone().json()).message || ''; } catch (e) { }
+    if (res.status === 409 || (res.status === 422 && /sha/i.test(msg))) { const err = new Error('conflict'); err.conflict = true; throw err; }
+    throw await ghHttpError(res, 'خطا در ذخیره روی گیت‌هاب');
+}
+
+function applyLoaded(data, sha, etag) {
+    DB = data; DB_SHA = sha; DB_ETAG = etag || null;
+}
+
+/* بارگذاری (برای پولینگ). true = تغییر کرده، false = بدون تغییر */
+async function loadDb() {
+    onConn('syncing');
+    try {
+        const r = await ghFetchFile(DB_ETAG);
+        if (r.notModified) { onConn('ok'); return false; }
+        applyLoaded(r.data, r.sha, r.etag);
+        onConn('ok');
+        return true;
+    } catch (e) { onConn('error', e.message); throw e; }
+}
+
+/*
+  updateDb(mutator, message)
+  mutator(data) روی «تازه‌ترین» نسخه اجرا می‌شود؛
+   - برای لغو عملیات: throw new Error('پیام')  (aborted)
+   - برای «تغییری لازم نیست»: return 'noop'
+  در صورت تداخل هم‌زمان (409) خودکار دوباره از نو تلاش می‌کند.
+*/
+let _chain = Promise.resolve();
+function updateDb(mutator, message) {
+    const run = async () => {
+        onConn('syncing');
+        let lastErr = null;
+        for (let attempt = 0; attempt < 6; attempt++) {
+            let fetched;
+            try { fetched = await ghFetchFile(); }
+            catch (e) { lastErr = e; if (e.network && attempt < 2) { await sleep(700); continue; } onConn('error', e.message); throw e; }
+            const data = normalizeDb(fetched.data);
+            let verdict;
+            try { verdict = mutator(data); }
+            catch (e) { applyLoaded(data, fetched.sha, fetched.etag); onConn('ok'); const err = new Error(e.message || 'عملیات انجام نشد'); err.aborted = true; throw err; }
+            if (verdict === 'noop') { applyLoaded(data, fetched.sha, fetched.etag); onConn('ok'); return data; }
+            try {
+                const newSha = await ghSaveFile(data, fetched.sha, message);
+                applyLoaded(data, newSha, null);
+                onConn('ok');
+                try { onDbApplied(); } catch (e) { }
+                return data;
+            } catch (e) {
+                lastErr = e;
+                if (e.conflict) { await sleep(150 + Math.random() * 350 * (attempt + 1)); continue; }
+                if (e.network && attempt < 2) { await sleep(700); continue; }
+                onConn('error', e.message);
+                throw e;
+            }
+        }
+        const err = lastErr || new Error('تداخل مکرر در ذخیره‌سازی؛ دوباره تلاش کنید.');
+        onConn('error', err.message);
+        throw err;
+    };
+    const p = _chain.then(run);
+    _chain = p.catch(() => { });
+    return p;
+}
+
+/* ---------- تنظیمات اولیه اتصال (مشترک) ---------- */
+async function connectAndPrepare(cfg) {
+    saveGhConfig(cfg);
+    try {
+        await ghCheckRepo();
+        const r = await ghFetchFile();
+        applyLoaded(r.data, r.sha, r.etag);
+        if (r.isNew) await updateDb(() => { }, 'راه‌اندازی اولیه پایگاه داده SRJ');
+    } catch (e) { clearGhConfig(); throw e; }
+}
+
+/* ---------- وضعیت چرخه کاری ---------- */
+function cycleInfo(user, projects) {
+    const proj = (projects || []).find(p => p.code === user.project);
+    if (!proj || !user.cycleStart) return { state: 'none', text: 'تعریف‌نشده' };
+    const start = new Date(user.cycleStart + 'T00:00:00');
+    const diff = Math.floor((new Date() - start) / 86400000);
+    if (diff < 0) return { state: 'none', text: 'هنوز شروع نشده' };
+    const wd = +proj.workDays || 1, rd = +proj.restDays || 1;
+    const pos = diff % (wd + rd);
+    if (pos < wd) return { state: 'work', text: `روز ${pos + 1} کار (از ${wd})` };
+    return { state: 'rest', text: `روز ${pos - wd + 1} استراحت (از ${rd})` };
+}
+
+const SESSION_KEY='srj_staff_session_v1', APP='./SRJ_Personnel_App.html';
+function render(user){
+  const mine=DB.worklogs.filter(l=>normUser(l.user)===normUser(user.username)).sort((a,b)=>(b.startTs||toEn(b.date)).localeCompare(a.startTs||toEn(a.date)));
+  const last=mine[0]; let st='امروز هنوز ورود نزده‌اید', btns=`<a class="btn" href="${APP}?action=in">🟢 ثبت ورود</a>`;
+  if(last&&last.start&&!last.end){st='🟢 در حال حضور — ورود '+esc(toEn(last.start));btns=`<a class="btn red" href="${APP}?action=out">🛑 ثبت خروج</a>`;}
+  else if(last&&last.end&&toEn(last.date)===todayJ()){st='✓ شیفت امروز ثبت شد ('+esc(toEn(last.start))+' تا '+esc(toEn(last.end))+')';btns=`<a class="btn gray" href="${APP}?view=punch">📱 باز کردن برنامه</a>`;}
+  const m=monthJ(); const ml=mine.filter(l=>toEn(l.date).startsWith(m)&&l.end&&l.approval!=='rejected');
+  const days=a=>new Set(ml.filter(l=>a?l.approval==='approved':l.approval!=='approved').map(l=>toEn(l.date))).size;
+  const hrs=a=>fmtHours(ml.filter(l=>a?l.approval==='approved':l.approval!=='approved').reduce((s,l)=>s+hoursBetween(l),0));
+  const un=DB.mail.filter(x=>x.dir==='toStaff'&&x.to&&(x.to.type==='all'||(x.to.type==='project'&&x.to.value===user.project)||(x.to.type==='user'&&normUser(x.to.value)===normUser(user.username)))&&!(x.readBy||[]).includes(user.username)).length+DB.payslips.filter(s=>normUser(s.username)===normUser(user.username)&&!(s.readBy||[]).includes(user.username)).length;
+  document.getElementById('c').innerHTML=`<div class="card"><div class="name">${esc(user.name)}</div><div class="role">${esc(user.roleTitle||'')} · ${esc(user.personnelNo||'')}</div><div class="st">${st}</div>${btns}</div>
+  <div class="card"><div style="font-size:.8rem;font-weight:800">📊 ${esc(m)}</div><div class="grid"><div class="box"><div class="l">حضور تاییدشده</div><div class="v ok">${days(true)} روز</div></div><div class="box"><div class="l">حضور در انتظار</div><div class="v pe">${days(false)} روز</div></div><div class="box"><div class="l">ساعت تاییدشده</div><div class="v ok">${hrs(true)}</div></div><div class="box"><div class="l">ساعت در انتظار</div><div class="v pe">${hrs(false)}</div></div></div>
+  <a class="btn gray" href="${APP}?view=inbox">✉️ صندوق دریافت${un?'<span class="env">'+un+'</span>':''}</a></div><div class="muted" style="padding:6px">آخرین بروزرسانی: ${nowHM()}</div>`;
+}
+async function boot(){
+  setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-GB',{hour12:false})},1000);
+  const sess=localStorage.getItem(SESSION_KEY), c=document.getElementById('c');
+  if(!ghConfig()||!sess){c.innerHTML=`<div class="muted">ابتدا یک‌بار وارد برنامه پرسنل شوید.<br><a class="btn" href="${APP}">باز کردن برنامه</a></div>`;return;}
+  const go=async()=>{try{await loadDb();const u=DB.users.find(x=>normUser(x.username)===normUser(sess));if(!u){c.innerHTML='<div class="muted">کاربر یافت نشد؛ دوباره وارد برنامه شوید.</div>';return;}render(u);}catch(e){if(!DB)c.innerHTML='<div class="muted">عدم اتصال: '+esc(e.message)+'</div>';}};
+  await go(); setInterval(go,30000);
+}
+window.onload=boot;
+</script></body></html>
